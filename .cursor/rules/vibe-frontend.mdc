@@ -1,0 +1,40 @@
+---
+description: VibeCoding 前端开发约定（Vue3 + OpenTiny + i18n）
+globs: vibe-fronted/**
+alwaysApply: false
+---
+
+# 前端约定
+
+## 技术栈
+
+Node v22 + Vue3 + Vite + `@opentiny/vue@3` + Axios + vue-i18n。目录：`vibe-fronted/`。
+
+## 目录习惯
+
+- `src/api/`：按 REST 资源组织，与后端路径对齐
+- `src/views/`、`src/components/`、`src/router/`、`src/stores/`
+- `src/locales/`：`zh-CN` / `en-US` / `ja-JP` / `ko-KR`
+
+## 组件与 i18n
+
+- DialogBox 使用 `v-model:visible`（不是默认 v-model）；弹层建议 `append-to-body`
+- 界面文案禁止硬编码中文；用 `$t('key')` / `t('key')`
+- 枚举、校验、空态、菜单均需四语；语言可切换并持久化（`vibe_locale`）
+- 后端错误用错误码，前端按码翻译
+- UI：简约主题变量在 `src/style.css`；深浅色由 `data-theme` + `src/utils/theme.js` 切换
+- 布局：`MainLayout` 顶栏三菜单；`CenterLayout` 仅 `/center/*` 显示侧栏
+
+## 接口与权限
+
+- 解析 `{ code, message, data }`；`code !== 1200` 提示错误
+- Bearer Token；按权限 code 控菜单/按钮，不能替代后端鉴权
+- 登录 + 注册 + 退出；多角色切换；顶栏语言 / 主题切换
+- 公开页：`meta.public`（首页 / 排行 / 详情）
+- 个人中心 `/center/*`：`meta.auth`；管理页另加 `meta.perm`
+- **无权限跳转 403**（`/403`）；**无资源跳转 404**（`/404`）
+- 登录后默认回首页；勿无条件重定向 dashboard
+
+## 风格
+
+- 与邻近代码一致；不擅自升级依赖；复用 ≥2 次再抽取

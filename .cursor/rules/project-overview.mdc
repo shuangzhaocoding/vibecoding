@@ -1,0 +1,36 @@
+---
+description: VibeCoding 项目总览与协作约定（始终生效）
+alwaysApply: true
+---
+
+# VibeCoding 项目总览
+
+## 目录
+
+- `vibe-backend/`：Python 3.11 + FastAPI + Tortoise + Pydantic + MySQL + JWT + 华为 OBS + SMTP
+- `vibe-fronted/`：Vue3 + Vite + @opentiny/vue@3 + Axios + vue-i18n（中英日韩）
+
+## 产品定位
+
+- AI / VibeCoding 作品展示平台：发布作品（封面、介绍、网站地址）、点赞收藏评论、人气排行
+- 访客可浏览作品列表 / 详情 / 排行 / 评论；点赞、收藏、评论、发布需登录
+- 注册：邮箱验证码（SMTP）；默认角色 `creator`
+- UI：简约统一风格，支持深色 / 浅色模式；文案全部走 i18n
+- 导航：顶栏「首页 / 人气排行 / 个人中心」；侧栏仅在个人中心显示
+
+## 原则
+
+- API 遵循 RESTful；统一响应 `code` 1200 / 1100
+- 开发跨域：Vite proxy 转发 `/api` → 后端 `8001`（勿依赖后端 CORS）
+- JWT Bearer；权限点 + data_scope 后端强制校验
+- 前端优先 OpenTiny，不足再自研；文案走 i18n（zh/en/ja/ko）
+- Python 虚拟环境：项目根目录 `venv/`（Python 3.11）
+- 密钥仅放 `vibe-backend/.env`（gitignore），禁止写入代码或 Cursor rules
+- 不无关重构、不擅自升级依赖；逻辑复用 ≥2 次再抽取
+
+## 权限速记
+
+- 权限点预置英文 code；角色/用户可勾选分配
+- 多角色 + 切角色重签 JWT；生效权限 = 当前角色 ∪ 用户附加
+- data_scope：`all` / `assigned` / `reported`
+- 作品域：`project:view|create|update|delete|interact|manage`

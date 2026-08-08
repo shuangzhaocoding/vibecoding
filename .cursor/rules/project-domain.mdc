@@ -1,0 +1,36 @@
+---
+description: 作品域约定（发布、互动、排行）
+globs: "{vibe-backend/app/project_module/**,vibe-backend/app/models/project.py,vibe-fronted/src/views/project/**,vibe-fronted/src/api/project.js}"
+alwaysApply: false
+---
+
+# 作品域
+
+## 模型字段
+
+- `projects`：title、cover_url、summary、description、site_url、tags(JSON)、author、status(`draft|published|hidden`)
+- 计数：`view_count` / `like_count` / `favorite_count` / `comment_count`
+- 互动表：`project_likes`、`project_favorites`（user+project 唯一）、`project_comments`（支持 parent_id）
+
+## 人气
+
+```
+popularity = like_count*3 + favorite_count*2 + comment_count*2 + view_count
+```
+
+- 排行：`GET /api/projects/ranking`，仅 `published`，按 popularity 降序
+
+## API 约定
+
+- 公开读（可选登录以返回 liked/favorited）：列表、详情、排行、评论列表
+- 详情 GET：`view_count += 1`
+- 写操作需登录 + 对应权限；删改校验作者或 `project:manage`
+- 点赞/收藏幂等；取消时计数不小于 0
+
+## 前端页面
+
+- 广场 `/`、排行 `/ranking`、详情 `/projects/:id`（公开）
+- 个人中心：我的作品 / 我的点赞 / 收藏 / 发布编辑
+- 详细介绍与评论使用 Markdown（md-editor-v3）；存储 Markdown，展示时 marked 转 HTML + DOMPurify 消毒；兼容旧版 HTML 内容
+- 评论接口返回树形 `children`，前端按层级缩进展示并可回复
+- 封面经 `POST /api/files/upload` 上传 OBS 后写入 `cover_url`

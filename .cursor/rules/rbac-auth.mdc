@@ -1,0 +1,47 @@
+---
+description: RBAC 权限与认证约定（用户/角色/权限相关代码）
+globs: "{vibe-backend/**,vibe-fronted/**}"
+alwaysApply: false
+---
+
+# 认证与 RBAC
+
+## 认证
+
+- JWT Bearer；登录/注册签发，退出清本地 token（`vibe_auth`）
+- 注册：邮箱验证码 → 创建用户 → 赋默认角色 `creator`
+- 用户多角色；切换「当前角色」后菜单/按钮/数据范围刷新
+- 生效权限（推荐）：当前角色权限 ∪ 用户附加权限
+- 数据范围：取当前角色 `data_scope`（`all` | `assigned` | `reported`）
+
+## 权限点
+
+- 权限点可预置也可在「权限管理」页动态增删改（需 `system:perm:manage`）
+- 分配 UI：分组 + 复选框 + 全选/不选；可赋给角色或用户
+- 后端用权限依赖（如 `PermissionChecking("project:create")`）校验写操作
+- 切角色：`POST /api/auth/switch-role` 后重新签发 JWT
+
+## 作品相关权限
+
+- `project:view` / `project:create` / `project:update` / `project:delete`
+- `project:interact`：点赞、收藏、评论
+- `project:manage`：管理任意作品（含下架）；删改他人作品需此权限或作者本人
+
+## 无权限 / 无资源跳转（前端）
+
+- **无权限 → 403**（路由名 `forbidden`，路径 `/403`）
+- **无资源 → 404**（路由名 `not-found`，路径 `/404`）
+- 登录后首页：按权限选首个可访问菜单；公开广场始终可进
+- 实现参考：`src/router/index.js`、`src/utils/access.js`、`src/api/request.js`
+
+## 模块
+
+- `auth_module`：验证码、注册、登录、登出、切角色、当前用户
+- `system_module`：用户/角色 CRUD、权限分配
+- 前端：`Login` / `Register`、顶栏退出与角色切换、`system/*`
+
+## 内置角色种子
+
+- `admin` + `all` + 全部权限；`creator` 为注册默认角色
+- `is_system` 角色不可删
+- 种子管理员：`admin` / `.env` 中 `DEFAULT_PASSWORD`

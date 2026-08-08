@@ -1,0 +1,41 @@
+---
+description: VibeCoding 后端开发约定（FastAPI + Tortoise + REST）
+globs: vibe-backend/**
+alwaysApply: false
+---
+
+# 后端约定
+
+## 模块结构
+
+- 业务按 `app/<module>_module/`：`router.py`、`schema.py`
+- `include_router` 的 prefix 全局唯一；模型 `app/models/`；工具 `app/utils/`；配置 `app/config/`
+- 现有模块：`auth_module`、`system_module`、`project_module`、`file_module`
+
+## RESTful
+
+- 资源名词复数：`/api/projects`、`/api/users`、`/api/roles`、`/api/files`
+- `GET/POST/PATCH/DELETE` 表达读写；子资源如 `/projects/{id}/comments`、`/projects/{id}/like`
+- 认证：`/api/auth/login`、`/register`、`/send-code`、`/logout`、`/switch-role`、`/me`
+- 列表筛选与分页用 Query；响应仍用 `ResponseSuccess` / `ResponseFailed`
+
+```python
+router = APIRouter(prefix="/projects", tags=["projects"])
+
+@router.get("", summary="作品列表")
+async def list_projects(...):
+    return ResponseSuccess(data=...)
+```
+
+## 鉴权与数据
+
+- JWT + `PermissionChecking("project:create")`；公开读用 `get_optional_user`
+- Tortoise ORM + MySQL（`aiomysql`）；配置从 `.env` 读取
+- 封面上传：`app/utils/obs.py` → 华为 OBS，前缀 `vibecoding/covers/`
+- 邮箱验证码：`app/utils/email.py`，存 `email_codes` 表（10 分钟有效 / 60 秒冷却）
+- 业务错误返回稳定错误码，便于前端 i18n（勿直接甩堆栈）
+- 日志 loguru；开发入口 `run.py`（默认端口 8001）
+
+## 风格
+
+- 文件头中文注释；与邻近模块一致；复用 ≥2 次再抽取
