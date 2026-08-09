@@ -1,5 +1,6 @@
 <template>
   <div class="auth-page">
+    <AuthScene />
     <div class="auth-locale">
       <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
         {{ theme === 'dark' ? '☀' : '☾' }}
@@ -56,6 +57,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { localeOptions, setLocale } from '@/locales'
 import { resolveHomeRoute } from '@/utils/access'
+import AuthScene from '@/components/AuthScene.vue'
 import { getStoredTheme, toggleTheme } from '@/utils/theme'
 
 const LAST_ACCOUNT_KEY = 'vibe_last_account'

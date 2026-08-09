@@ -1,5 +1,6 @@
 <template>
   <div class="auth-page">
+    <AuthScene />
     <div class="auth-locale">
       <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
         {{ theme === 'dark' ? '☀' : '☾' }}
@@ -80,6 +81,7 @@ import { sendCodeApi } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 import { localeOptions, setLocale } from '@/locales'
 import { resolveHomeRoute } from '@/utils/access'
+import AuthScene from '@/components/AuthScene.vue'
 import { getStoredTheme, toggleTheme } from '@/utils/theme'
 
 const { t, locale } = useI18n()
