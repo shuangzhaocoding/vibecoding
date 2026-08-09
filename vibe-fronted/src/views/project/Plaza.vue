@@ -10,6 +10,7 @@
           :placeholder="t('project.search')"
           clearable
           @keyup.enter="onSearch"
+          @clear="onSearch"
         />
         <button type="button" class="search-box-btn" @click="onSearch">
           <AppIcon name="search" :size="16" />
@@ -18,12 +19,15 @@
       </div>
     </section>
 
-    <section v-if="searching" class="page-panel">
+    <section class="page-panel">
       <div class="page-toolbar">
-        <h2 class="section-title">{{ t('project.searchResult') }}</h2>
-        <tiny-button plain @click="clearSearch">
-          <span class="icon-text"><AppIcon name="refresh" :size="15" />{{ t('common.reset') }}</span>
-        </tiny-button>
+        <h2 class="section-title">
+          {{ keyword.trim() ? t('project.searchResult') : t('project.allProjects') }}
+        </h2>
+        <router-link class="link-more" :to="{ name: 'ranking' }">
+          <AppIcon name="ranking" :size="15" />
+          {{ t('project.viewRanking') }}
+        </router-link>
       </div>
       <div v-if="loading" class="empty-state">{{ t('common.loading') }}</div>
       <div v-else-if="!items.length" class="empty-state">
@@ -33,32 +37,14 @@
       <div v-else class="project-grid">
         <ProjectCard v-for="p in items" :key="p.id" :project="p" />
       </div>
-      <div class="pager-wrap">
+      <div v-if="total > 0" class="pager-wrap">
         <tiny-pager
           :current-page="page"
           :page-size="pageSize"
           :total="total"
-          layout="prev, pager, next"
+          layout="total, prev, pager, next"
           @current-change="onPage"
         />
-      </div>
-    </section>
-
-    <section v-else>
-      <div class="page-toolbar">
-        <h2 class="section-title">{{ t('project.popularSection') }}</h2>
-        <router-link class="link-more" :to="{ name: 'ranking' }">
-          <AppIcon name="ranking" :size="15" />
-          {{ t('project.viewRanking') }}
-        </router-link>
-      </div>
-      <div v-if="loadingPopular" class="empty-state">{{ t('common.loading') }}</div>
-      <div v-else-if="!popular.length" class="empty-state">
-        <AppIcon name="inbox" :size="36" />
-        <span>{{ t('project.empty') }}</span>
-      </div>
-      <div v-else class="project-grid">
-        <ProjectCard v-for="p in popular" :key="p.id" :project="p" />
       </div>
     </section>
   </div>
@@ -67,39 +53,26 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchProjects, fetchRanking } from '@/api/project'
+import { fetchProjects } from '@/api/project'
 import AppIcon from '@/components/AppIcon.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 
 const { t } = useI18n()
 const keyword = ref('')
-const searching = ref(false)
 const items = ref([])
-const popular = ref([])
 const total = ref(0)
 const page = ref(1)
-const pageSize = 12
+const pageSize = 20
 const loading = ref(false)
-const loadingPopular = ref(false)
 
-async function loadPopular() {
-  loadingPopular.value = true
-  try {
-    const res = await fetchRanking({ limit: 8 })
-    popular.value = res.data || []
-  } finally {
-    loadingPopular.value = false
-  }
-}
-
-async function loadSearch() {
+async function loadList() {
   loading.value = true
   try {
     const res = await fetchProjects({
       page: page.value,
       page_size: pageSize,
-      keyword: keyword.value || undefined,
-      sort: 'popular',
+      keyword: keyword.value.trim() || undefined,
+      sort: 'newest',
     })
     items.value = res.data.items
     total.value = res.data.total
@@ -109,27 +82,17 @@ async function loadSearch() {
 }
 
 function onSearch() {
-  if (!keyword.value.trim()) {
-    clearSearch()
-    return
-  }
-  searching.value = true
   page.value = 1
-  loadSearch()
-}
-
-function clearSearch() {
-  searching.value = false
-  keyword.value = ''
-  items.value = []
+  loadList()
 }
 
 function onPage(p) {
   page.value = p
-  loadSearch()
+  loadList()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(loadPopular)
+onMounted(loadList)
 </script>
 
 <style scoped>

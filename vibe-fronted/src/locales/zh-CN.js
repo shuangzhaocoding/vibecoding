@@ -96,6 +96,7 @@ export default {
     search: '全站搜索 AI 相关作品、工具、资源',
     searchAction: '搜索',
     searchResult: '搜索结果',
+    allProjects: '全部作品',
     popularSection: '人气作品',
     viewRanking: '查看完整排行',
     sortNewest: '最新',

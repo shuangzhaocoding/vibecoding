@@ -96,6 +96,7 @@ export default {
     search: 'AI 작품·도구·리소스 검색',
     searchAction: '검색',
     searchResult: '검색 결과',
+    allProjects: '전체 작품',
     popularSection: '인기 작품',
     viewRanking: '전체 순위 보기',
     sortNewest: '최신',

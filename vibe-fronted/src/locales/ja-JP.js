@@ -96,6 +96,7 @@ export default {
     search: 'AI作品・ツール・リソースを検索',
     searchAction: '検索',
     searchResult: '検索結果',
+    allProjects: 'すべての作品',
     popularSection: '人気の作品',
     viewRanking: 'ランキングを見る',
     sortNewest: '新着',

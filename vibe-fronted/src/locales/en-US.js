@@ -96,6 +96,7 @@ export default {
     search: 'Search AI projects, tools, and resources',
     searchAction: 'Search',
     searchResult: 'Search results',
+    allProjects: 'All projects',
     popularSection: 'Popular projects',
     viewRanking: 'Full ranking',
     sortNewest: 'Newest',
