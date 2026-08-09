@@ -22,7 +22,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APP_HOST=127.0.0.1 \
     APP_PORT=8000 \
     APP_WORKERS=4 \
-    VITE_HMR_CLIENT_PORT=80 \
+    VITE_HMR_CLIENT_PORT=443 \
     VITE_API_PROXY=http://127.0.0.1:8000
 
 # apt 清华源（基础镜像为 Debian/Ubuntu 类时生效）
@@ -105,6 +105,7 @@ http {
 EOF
 
 # 启动脚本：后端 → 前端 Vite → nginx
+# 注意：勿对 EXIT 做 cleanup 后再 exec；dash 会在 exec 前触发 EXIT，把 Vite/uvicorn 杀掉 → nginx 502
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/sh
 set -eu
@@ -113,43 +114,66 @@ APP_HOST="${APP_HOST:-127.0.0.1}"
 APP_PORT="${APP_PORT:-8000}"
 APP_WORKERS="${APP_WORKERS:-1}"
 
+UVICORN_PID=""
+VITE_PID=""
+NGINX_PID=""
+
 cleanup() {
-  kill "${UVICORN_PID:-}" "${VITE_PID:-}" 2>/dev/null || true
-  wait "${UVICORN_PID:-}" 2>/dev/null || true
-  wait "${VITE_PID:-}" 2>/dev/null || true
+  echo "[entrypoint] shutting down..."
+  kill ${NGINX_PID:-} ${VITE_PID:-} ${UVICORN_PID:-} 2>/dev/null || true
+  wait ${NGINX_PID:-} 2>/dev/null || true
+  wait ${VITE_PID:-} 2>/dev/null || true
+  wait ${UVICORN_PID:-} 2>/dev/null || true
 }
-trap cleanup INT TERM EXIT
+trap cleanup INT TERM
+
+wait_http() {
+  url="$1"
+  name="$2"
+  i=0
+  while [ "$i" -lt 60 ]; do
+    if python3 -c "import urllib.request; urllib.request.urlopen('${url}', timeout=1)" >/dev/null 2>&1; then
+      echo "[entrypoint] ${name} ready"
+      return 0
+    fi
+    # 进程已退出则早失败
+    if [ -n "${3:-}" ] && ! kill -0 "$3" 2>/dev/null; then
+      echo "[entrypoint] ERROR: ${name} process exited before becoming ready" >&2
+      return 1
+    fi
+    i=$((i + 1))
+    sleep 1
+  done
+  echo "[entrypoint] ERROR: ${name} not ready: ${url}" >&2
+  return 1
+}
 
 echo "[entrypoint] start uvicorn ${APP_HOST}:${APP_PORT} workers=${APP_WORKERS}"
 cd /vibecoding
 uvicorn app.main:app --host "${APP_HOST}" --port "${APP_PORT}" --workers "${APP_WORKERS}" &
 UVICORN_PID=$!
-
-i=0
-while [ "$i" -lt 60 ]; do
-  if python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${APP_PORT}/api/health', timeout=1)" >/dev/null 2>&1; then
-    break
-  fi
-  i=$((i + 1))
-  sleep 1
-done
+wait_http "http://127.0.0.1:${APP_PORT}/api/health" "uvicorn" "${UVICORN_PID}"
 
 echo "[entrypoint] start vite (npm run dev) :5173"
 cd /vibecoding/frontend
 npm run dev -- --host 0.0.0.0 --port 5173 --strictPort &
 VITE_PID=$!
-
-i=0
-while [ "$i" -lt 60 ]; do
-  if python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5173', timeout=1)" >/dev/null 2>&1; then
-    break
-  fi
-  i=$((i + 1))
-  sleep 1
-done
+wait_http "http://127.0.0.1:5173/" "vite" "${VITE_PID}"
 
 echo "[entrypoint] start nginx :80"
-exec nginx -g 'daemon off;'
+nginx -g 'daemon off;' &
+NGINX_PID=$!
+
+# 任一进程退出则结束容器（便于编排重启）
+while kill -0 "${UVICORN_PID}" 2>/dev/null \
+  && kill -0 "${VITE_PID}" 2>/dev/null \
+  && kill -0 "${NGINX_PID}" 2>/dev/null; do
+  sleep 2
+done
+
+echo "[entrypoint] a child process exited" >&2
+cleanup
+exit 1
 EOF
 RUN chmod +x /entrypoint.sh
 
