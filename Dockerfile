@@ -134,7 +134,7 @@ RUN pip3 config set global.extra-index-url https://repo.huaweicloud.com/reposito
 WORKDIR /vibecoding
 
 COPY vibe-backend/requirements.txt /tmp/requirements.txt
-RUN pip3 --no-cache-dir install -r /tmp/requirements.txt --trusted-host repo.huaweicloud.com \
+RUN pip3 install -r /tmp/requirements.txt --trusted-host repo.huaweicloud.com \
     && rm -f /tmp/requirements.txt
 
 COPY vibe-backend/app ./app
