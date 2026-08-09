@@ -24,6 +24,7 @@ def _author_brief(user: User) -> dict:
         "id": user.id,
         "username": user.username,
         "display_name": user.display_name,
+        "avatar_url": getattr(user, "avatar_url", "") or "",
     }
 
 

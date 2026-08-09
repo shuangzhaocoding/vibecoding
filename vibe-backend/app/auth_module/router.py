@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-"""认证路由：验证码、注册、登录、登出、切角色、当前用户。"""
+"""认证路由：验证码、注册、登录、登出、切角色、当前用户、资料与改密。"""
 from fastapi import APIRouter, Depends
 
 from app.auth_module.schema import (
+    ChangePasswordBody,
     LoginBody,
     LoginResult,
+    ProfileUpdateBody,
     RegisterBody,
+    ResetPasswordBody,
     RoleBrief,
     SendCodeBody,
     SwitchRoleBody,
@@ -14,7 +17,7 @@ from app.auth_module.schema import (
 from app.common.auth import CurrentUser, _load_effective_permissions, get_current_user
 from app.models import Role, User
 from app.schema import AuthException, BaseAppException, ResponseSuccess
-from app.utils.email import create_and_send_register_code, verify_register_code
+from app.utils.email import create_and_send_code, create_and_send_register_code, verify_code, verify_register_code
 from app.utils.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -115,3 +118,52 @@ async def me(current: CurrentUser = Depends(get_current_user)):
         "permissions": sorted(current.permission_codes),
     }
     return ResponseSuccess(data=data)
+
+
+@router.patch("/profile", summary="更新个人资料（姓名、头像）")
+async def update_profile(body: ProfileUpdateBody, current: CurrentUser = Depends(get_current_user)):
+    user = current.user
+    if body.display_name is not None:
+        name = body.display_name.strip()
+        if not name:
+            raise BaseAppException(message="display name empty", error_code="PROFILE_DISPLAY_NAME_EMPTY")
+        user.display_name = name
+    if body.avatar_url is not None:
+        user.avatar_url = body.avatar_url.strip()
+    await user.save()
+    return ResponseSuccess(data=UserBrief.model_validate(user).model_dump())
+
+
+@router.post("/change-password", summary="修改密码")
+async def change_password(body: ChangePasswordBody, current: CurrentUser = Depends(get_current_user)):
+    user = current.user
+    if not verify_password(body.old_password, user.password_hash):
+        raise AuthException(message="old password wrong", error_code="AUTH_OLD_PASSWORD_WRONG")
+    if body.old_password == body.new_password:
+        raise BaseAppException(message="password unchanged", error_code="AUTH_PASSWORD_UNCHANGED")
+    user.password_hash = hash_password(body.new_password)
+    await user.save()
+    return ResponseSuccess(data=True)
+
+
+@router.post("/send-reset-code", summary="发送重置密码验证码")
+async def send_reset_code(body: SendCodeBody):
+    email = body.email.lower()
+    user = await User.get_or_none(email=email)
+    if not user or not user.is_active:
+        raise BaseAppException(message="user not found", error_code="USER_NOT_FOUND")
+    await create_and_send_code(email, "reset_password")
+    return ResponseSuccess(data=True)
+
+
+@router.post("/reset-password", summary="邮箱验证码重置密码")
+async def reset_password(body: ResetPasswordBody):
+    email = body.email.lower()
+    user = await User.get_or_none(email=email)
+    if not user or not user.is_active:
+        raise BaseAppException(message="user not found", error_code="USER_NOT_FOUND")
+    if not await verify_code(email, body.code.strip(), "reset_password"):
+        raise BaseAppException(message="invalid code", error_code="EMAIL_CODE_INVALID")
+    user.password_hash = hash_password(body.new_password)
+    await user.save()
+    return ResponseSuccess(data=True)

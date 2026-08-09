@@ -10,12 +10,25 @@
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.loginTitle') }}</h1>
       <tiny-form label-position="top" @submit.prevent>
-        <tiny-form-item :label="t('auth.username')">
-          <tiny-input v-model="form.username" />
+        <tiny-form-item :label="t('auth.account')">
+          <tiny-input
+            v-model="form.username"
+            :placeholder="t('auth.accountPlaceholder')"
+            @keyup.enter="onSubmit"
+          />
         </tiny-form-item>
         <tiny-form-item :label="t('auth.password')">
-          <tiny-input v-model="form.password" type="password" show-password />
+          <tiny-input
+            v-model="form.password"
+            type="password"
+            show-password
+            :placeholder="t('auth.password')"
+            @keyup.enter="onSubmit"
+          />
         </tiny-form-item>
+        <div class="auth-extra">
+          <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
+        </div>
         <tiny-button type="primary" style="width:100%" :loading="loading" @click="onSubmit">
           {{ t('auth.login') }}
         </tiny-button>
@@ -73,3 +86,20 @@ async function onSubmit() {
   }
 }
 </script>
+
+<style scoped>
+.auth-extra {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 14px;
+  font-size: 13px;
+}
+
+.auth-extra a {
+  color: var(--primary);
+}
+
+.auth-extra a:hover {
+  text-decoration: underline;
+}
+</style>

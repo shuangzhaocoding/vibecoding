@@ -26,6 +26,22 @@ class SwitchRoleBody(BaseModel):
     role_id: int
 
 
+class ProfileUpdateBody(BaseModel):
+    display_name: Optional[str] = Field(default=None, min_length=1, max_length=128)
+    avatar_url: Optional[str] = Field(default=None, max_length=512)
+
+
+class ChangePasswordBody(BaseModel):
+    old_password: str = Field(min_length=1, max_length=72)
+    new_password: str = Field(min_length=6, max_length=72)
+
+
+class ResetPasswordBody(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=4, max_length=16)
+    new_password: str = Field(min_length=6, max_length=72)
+
+
 class RoleBrief(BaseModel):
     id: int
     code: str
@@ -41,6 +57,7 @@ class UserBrief(BaseModel):
     username: str
     email: str
     display_name: str
+    avatar_url: str = ""
     is_active: bool
 
     class Config:

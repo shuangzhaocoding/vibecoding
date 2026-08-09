@@ -38,6 +38,7 @@ class User(Model):
     email = fields.CharField(max_length=128, unique=True)
     password_hash = fields.CharField(max_length=255)
     display_name = fields.CharField(max_length=128)
+    avatar_url = fields.CharField(max_length=512, default="")
     is_active = fields.BooleanField(default=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)

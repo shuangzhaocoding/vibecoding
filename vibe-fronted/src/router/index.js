@@ -16,6 +16,12 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/views/ForgotPassword.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/',
     component: () => import('@/layout/MainLayout.vue'),
     children: [
@@ -43,6 +49,12 @@ const routes = [
         meta: { auth: true },
         redirect: { name: 'mine' },
         children: [
+          {
+            path: 'profile',
+            name: 'profile',
+            component: () => import('@/views/center/Profile.vue'),
+            meta: { auth: true },
+          },
           {
             path: 'mine',
             name: 'mine',

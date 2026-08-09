@@ -33,7 +33,10 @@
           {{ theme === 'dark' ? '☀' : '☾' }}
         </button>
         <template v-if="userStore.isLogin">
-          <span class="user-name">{{ userStore.user?.display_name }}</span>
+          <router-link to="/center/profile" class="user-chip" :title="t('menu.profile')">
+            <span class="user-avatar" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
+            <span class="user-name">{{ userStore.user?.display_name }}</span>
+          </router-link>
           <tiny-select
             v-if="userStore.roles.length > 1"
             class="action-select action-select-role"
@@ -97,7 +100,10 @@
       </div>
       <div class="mobile-drawer-actions">
         <template v-if="userStore.isLogin">
-          <div class="mobile-user">{{ userStore.user?.display_name }}</div>
+          <router-link to="/center/profile" class="mobile-user" @click="menuOpen = false">
+            <span class="user-avatar sm" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
+            <span>{{ userStore.user?.display_name }}</span>
+          </router-link>
           <tiny-button type="primary" plain style="width:100%" @click="onLogout">{{ t('app.logout') }}</tiny-button>
         </template>
         <template v-else>
@@ -112,7 +118,7 @@
         <router-view />
       </main>
     </div>
-    <SiteFooter />
+    <SiteFooter v-if="!isCenter" />
     <ScrollFab />
   </div>
 </template>
@@ -139,16 +145,28 @@ const roleOptions = computed(() =>
   userStore.roles.map((r) => ({ value: r.id, label: r.name })),
 )
 
+const userAvatarLetter = computed(() =>
+  (userStore.user?.display_name || userStore.user?.username || '?').slice(0, 1).toUpperCase(),
+)
+
+const userAvatarStyle = computed(() => {
+  const url = userStore.user?.avatar_url
+  if (url) return { backgroundImage: `url(${url})`, color: 'transparent' }
+  return {}
+})
+
 const topMenus = [
   { to: '/', name: 'plaza', label: 'menu.home' },
   { to: '/ranking', name: 'ranking', label: 'menu.ranking' },
   { to: '/center', name: 'center', label: 'menu.center' },
 ]
 
+const isCenter = computed(() => route.path.startsWith('/center'))
+
 function isTopActive(item) {
   if (item.name === 'plaza') return route.name === 'plaza'
   if (item.name === 'ranking') return route.name === 'ranking'
-  if (item.name === 'center') return route.path.startsWith('/center')
+  if (item.name === 'center') return isCenter.value
   return false
 }
 
@@ -199,3 +217,58 @@ onUnmounted(() => {
   document.body.style.overflow = ''
 })
 </script>
+
+<style scoped>
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 160px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.user-chip:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.user-avatar.sm {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 0 2px 4px;
+}
+</style>

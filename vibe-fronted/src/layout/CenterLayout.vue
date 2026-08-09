@@ -42,6 +42,7 @@ const menuOpen = ref(false)
 
 const menus = computed(() => {
   const list = [
+    { to: '/center/profile', label: 'menu.profile' },
     { to: '/center/mine', label: 'menu.mine' },
     { to: '/center/likes', label: 'menu.likes' },
     { to: '/center/favorites', label: 'menu.favorites' },

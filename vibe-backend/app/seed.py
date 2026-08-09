@@ -44,7 +44,25 @@ ROLE_DEFS = {
 }
 
 
+async def _ensure_user_avatar_column() -> None:
+    """已有库补充 avatar_url 列（Tortoise generate_schemas 不会 ALTER）。"""
+    from tortoise import connections
+
+    conn = connections.get("default")
+    try:
+        await conn.execute_query(
+            "ALTER TABLE `users` ADD COLUMN `avatar_url` VARCHAR(512) NOT NULL DEFAULT ''"
+        )
+        logger.info("added column users.avatar_url")
+    except Exception as exc:
+        msg = str(exc)
+        if "1060" in msg or "Duplicate column" in msg:
+            return
+        logger.debug(f"ensure avatar_url skipped: {exc}")
+
+
 async def seed_data() -> None:
+    await _ensure_user_avatar_column()
     for code, name, group in PERMISSIONS:
         perm = await Permission.get_or_none(code=code)
         if not perm:

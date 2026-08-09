@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginApi, logoutApi, registerApi, switchRoleApi } from '@/api/auth'
+import { loginApi, logoutApi, registerApi, switchRoleApi, updateProfileApi } from '@/api/auth'
 import { isTokenExpired, msUntilExpire } from '@/utils/token'
 
 const STORAGE_KEY = 'vibe_auth'
@@ -102,6 +102,12 @@ export const useUserStore = defineStore('user', {
     async switchRole(roleId) {
       const res = await switchRoleApi(roleId)
       this.applyAuth(res.data)
+    },
+    async updateProfile(payload) {
+      const res = await updateProfileApi(payload)
+      this.user = { ...(this.user || {}), ...res.data }
+      this.persist()
+      return res.data
     },
     async logout() {
       try {
