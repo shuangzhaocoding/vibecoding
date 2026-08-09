@@ -26,6 +26,14 @@
       <path d="M19 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
     </template>
 
+    <!-- dashboard / analytics -->
+    <template v-else-if="name === 'dashboard'">
+      <rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8" />
+      <rect x="13" y="4" width="7" height="4" rx="1.5" stroke="currentColor" stroke-width="1.8" />
+      <rect x="13" y="11" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8" />
+      <rect x="4" y="14" width="7" height="6" rx="1.5" stroke="currentColor" stroke-width="1.8" />
+    </template>
+
     <!-- eye / views -->
     <template v-else-if="name === 'eye'">
       <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />

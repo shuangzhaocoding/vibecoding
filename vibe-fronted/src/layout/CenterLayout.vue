@@ -50,6 +50,7 @@ const menus = computed(() => {
     { to: '/center/favorites', label: 'menu.favorites', icon: 'star' },
   ]
   if (userStore.hasPerm('project:create')) {
+    list.splice(2, 0, { to: '/center/dashboard', label: 'menu.dashboard', icon: 'dashboard' })
     list.push({ to: '/center/publish', label: 'menu.publish', icon: 'plus' })
   }
   if (userStore.hasPerm('project:manage')) {

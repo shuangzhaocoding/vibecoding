@@ -102,7 +102,8 @@ http {
             proxy_pass http://vibe_api/sitemap.xml;
         }
 
-        location ~ ^/projects/(?<pid>[0-9]+)$ {
+        # 勿用 (?<pid>)：$pid 与全局指令 pid 冲突会导致 nginx 启动失败
+        location ~ ^/projects/(?<project_id>[0-9]+)$ {
             error_page 418 = @project_og;
             if ($is_share_bot) { return 418; }
             try_files /index.html =404;
@@ -114,7 +115,7 @@ http {
             proxy_set_header X-Real-IP         $remote_addr;
             proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_pass http://vibe_api/api/og/projects/$pid;
+            proxy_pass http://vibe_api/api/og/projects/$project_id;
         }
 
         location / {

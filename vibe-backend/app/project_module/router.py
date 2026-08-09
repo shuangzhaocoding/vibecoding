@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -131,6 +131,164 @@ async def list_tags(limit: int = Query(40, ge=1, le=100)):
                 counter[name] += 1
     data = [{"name": name, "count": count} for name, count in counter.most_common(limit)]
     return ResponseSuccess(data=data)
+
+
+async def _daily_event_counts(table: str, project_ids: list[int], since: datetime, *, extra_where: str = "") -> dict[str, int]:
+    if not project_ids:
+        return {}
+    conn = connections.get("default")
+    placeholders = ", ".join(["%s"] * len(project_ids))
+    sql = (
+        f"SELECT DATE(created_at) AS d, COUNT(*) AS c FROM {table} "
+        f"WHERE project_id IN ({placeholders}) AND created_at >= %s {extra_where} "
+        f"GROUP BY DATE(created_at)"
+    )
+    rows = await conn.execute_query_dict(sql, [*project_ids, since])
+    out: dict[str, int] = {}
+    for row in rows:
+        key = row["d"]
+        if hasattr(key, "isoformat"):
+            key = key.isoformat()
+        else:
+            key = str(key)[:10]
+        out[key] = int(row["c"] or 0)
+    return out
+
+
+@router.get("/dashboard", summary="创作者数据看板")
+async def creator_dashboard(
+    days: int = Query(30, ge=7, le=90),
+    current: CurrentUser = Depends(get_current_user),
+):
+    """当前登录用户自己的作品数据概览、互动趋势与作品排行。"""
+    projects = await Project.filter(author_id=current.id).all()
+    project_ids = [p.id for p in projects]
+
+    overview = {
+        "project_count": len(projects),
+        "published_count": sum(1 for p in projects if p.status == "published"),
+        "draft_count": sum(1 for p in projects if p.status == "draft"),
+        "hidden_count": sum(1 for p in projects if p.status == "hidden"),
+        "view_count": sum(p.view_count or 0 for p in projects),
+        "like_count": sum(p.like_count or 0 for p in projects),
+        "favorite_count": sum(p.favorite_count or 0 for p in projects),
+        "comment_count": sum(p.comment_count or 0 for p in projects),
+        "popularity": sum(popularity(p) for p in projects),
+    }
+
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days - 1)
+    since = since.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    like_map = await _daily_event_counts("project_likes", project_ids, since)
+    fav_map = await _daily_event_counts("project_favorites", project_ids, since)
+    comment_map = await _daily_event_counts(
+        "project_comments", project_ids, since, extra_where="AND is_deleted = 0"
+    )
+
+    trend = []
+    period_likes = period_favorites = period_comments = 0
+    for i in range(days):
+        d = (since.date() + timedelta(days=i)).isoformat()
+        likes = like_map.get(d, 0)
+        favorites = fav_map.get(d, 0)
+        comments = comment_map.get(d, 0)
+        period_likes += likes
+        period_favorites += favorites
+        period_comments += comments
+        trend.append(
+            {
+                "date": d,
+                "likes": likes,
+                "favorites": favorites,
+                "comments": comments,
+                "total": likes + favorites + comments,
+            }
+        )
+
+    ranked = sorted(projects, key=lambda p: (popularity(p), p.view_count or 0, p.id), reverse=True)
+    top_projects = [
+        {
+            "id": p.id,
+            "title": p.title,
+            "cover_url": p.cover_url,
+            "status": p.status,
+            "view_count": p.view_count,
+            "like_count": p.like_count,
+            "favorite_count": p.favorite_count,
+            "comment_count": p.comment_count,
+            "popularity": popularity(p),
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in ranked[:8]
+    ]
+
+    # 近期互动（点赞/收藏/评论合并取最近）
+    recent: list[dict] = []
+    if project_ids:
+        conn = connections.get("default")
+        id_list = ", ".join(["%s"] * len(project_ids))
+        rows = await conn.execute_query_dict(
+            f"""
+            (
+              SELECT 'like' AS kind, pl.created_at, pl.user_id, pl.project_id, NULL AS comment_id
+              FROM project_likes pl WHERE pl.project_id IN ({id_list})
+            )
+            UNION ALL
+            (
+              SELECT 'favorite' AS kind, pf.created_at, pf.user_id, pf.project_id, NULL AS comment_id
+              FROM project_favorites pf WHERE pf.project_id IN ({id_list})
+            )
+            UNION ALL
+            (
+              SELECT 'comment' AS kind, pc.created_at, pc.user_id, pc.project_id, pc.id AS comment_id
+              FROM project_comments pc
+              WHERE pc.project_id IN ({id_list}) AND pc.is_deleted = 0
+            )
+            ORDER BY created_at DESC
+            LIMIT 12
+            """,
+            [*project_ids, *project_ids, *project_ids],
+        )
+        user_ids = {int(r["user_id"]) for r in rows if r.get("user_id")}
+        users = await User.filter(id__in=list(user_ids) or [-1]).all()
+        user_map = {u.id: u for u in users}
+        project_map = {p.id: p for p in projects}
+        for r in rows:
+            u = user_map.get(int(r["user_id"]))
+            p = project_map.get(int(r["project_id"]))
+            created = r["created_at"]
+            recent.append(
+                {
+                    "kind": r["kind"],
+                    "created_at": created.isoformat() if hasattr(created, "isoformat") else str(created),
+                    "user": {
+                        "id": u.id,
+                        "display_name": u.display_name,
+                        "username": u.username,
+                        "avatar_url": getattr(u, "avatar_url", "") or "",
+                    }
+                    if u
+                    else None,
+                    "project": {"id": p.id, "title": p.title} if p else None,
+                }
+            )
+
+    return ResponseSuccess(
+        data={
+            "overview": overview,
+            "period": {
+                "days": days,
+                "likes": period_likes,
+                "favorites": period_favorites,
+                "comments": period_comments,
+                "total": period_likes + period_favorites + period_comments,
+            },
+            "trend": trend,
+            "top_projects": top_projects,
+            "recent": recent,
+        }
+    )
 
 
 @router.get("", summary="作品列表")

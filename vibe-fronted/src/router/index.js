@@ -68,6 +68,12 @@ const routes = [
             meta: { auth: true },
           },
           {
+            path: 'dashboard',
+            name: 'dashboard',
+            component: () => import('@/views/center/Dashboard.vue'),
+            meta: { auth: true, perm: 'project:create' },
+          },
+          {
             path: 'likes',
             name: 'likes',
             component: () => import('@/views/project/Likes.vue'),

@@ -3,6 +3,7 @@ import request from './request'
 export const fetchProjects = (params) => request.get('/projects', { params })
 export const fetchProjectTags = (params) => request.get('/projects/tags', { params })
 export const fetchRanking = (params) => request.get('/projects/ranking', { params })
+export const fetchCreatorDashboard = (params) => request.get('/projects/dashboard', { params })
 export const fetchProject = (id) => request.get(`/projects/${id}`)
 export const createProject = (data) => request.post('/projects', data)
 export const updateProject = (id, data) => request.patch(`/projects/${id}`, data)

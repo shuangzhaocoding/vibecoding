@@ -1,0 +1,1 @@
+import{l as e}from"./router-BhmOPTFb.js";var t=(t,n)=>e.get(`/authors/${t}`,{params:n}),n=t=>e.get(`/notifications`,{params:t}),r=()=>e.get(`/notifications/unread-count`),i=()=>e.post(`/notifications/read-all`),a=t=>e.post(`/notifications/${t}/read`);export{a,i,n,r,t};
