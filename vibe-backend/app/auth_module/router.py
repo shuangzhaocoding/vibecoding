@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """认证路由：验证码、注册、登录、登出、切角色、当前用户、资料与改密。"""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.auth_module.schema import (
     ChangePasswordBody,
@@ -18,6 +18,8 @@ from app.common.auth import CurrentUser, _load_effective_permissions, get_curren
 from app.models import Role, User
 from app.schema import AuthException, BaseAppException, ResponseSuccess
 from app.utils.email import create_and_send_code, create_and_send_register_code, verify_code, verify_register_code
+from app.utils.rate_limit import check_rate_limit
+from app.utils.request_meta import client_ip
 from app.utils.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -39,8 +41,11 @@ async def _build_login_result(user: User, role: Role) -> LoginResult:
 
 
 @router.post("/send-code", summary="发送注册验证码")
-async def send_code(body: SendCodeBody):
+async def send_code(body: SendCodeBody, request: Request):
+    ip = client_ip(request)
+    check_rate_limit(f"send-code:ip:{ip}", limit=10, window_seconds=3600, error_code="RATE_LIMITED")
     email = body.email.lower()
+    check_rate_limit(f"send-code:email:{email}", limit=5, window_seconds=3600, error_code="EMAIL_CODE_COOLDOWN")
     if await User.filter(email=email).exists():
         raise BaseAppException(message="email exists", error_code="EMAIL_EXISTS")
     await create_and_send_register_code(email)
@@ -75,7 +80,12 @@ async def register(body: RegisterBody):
 
 
 @router.post("/login", summary="登录")
-async def login(body: LoginBody):
+async def login(body: LoginBody, request: Request):
+    ip = client_ip(request)
+    check_rate_limit(f"login:ip:{ip}", limit=30, window_seconds=600, error_code="RATE_LIMITED")
+    account_key = (body.username or "").strip().lower()
+    if account_key:
+        check_rate_limit(f"login:account:{account_key}", limit=15, window_seconds=600, error_code="RATE_LIMITED")
     user = await User.get_or_none(username=body.username)
     if not user:
         user = await User.get_or_none(email=body.username.lower())
@@ -147,12 +157,15 @@ async def change_password(body: ChangePasswordBody, current: CurrentUser = Depen
 
 
 @router.post("/send-reset-code", summary="发送重置密码验证码")
-async def send_reset_code(body: SendCodeBody):
+async def send_reset_code(body: SendCodeBody, request: Request):
+    ip = client_ip(request)
+    check_rate_limit(f"send-reset:ip:{ip}", limit=10, window_seconds=3600, error_code="RATE_LIMITED")
     email = body.email.lower()
+    check_rate_limit(f"send-reset:email:{email}", limit=5, window_seconds=3600, error_code="EMAIL_CODE_COOLDOWN")
     user = await User.get_or_none(email=email)
-    if not user or not user.is_active:
-        raise BaseAppException(message="user not found", error_code="USER_NOT_FOUND")
-    await create_and_send_code(email, "reset_password")
+    # 不暴露邮箱是否存在，统一返回成功
+    if user and user.is_active:
+        await create_and_send_code(email, "reset_password")
     return ResponseSuccess(data=True)
 
 

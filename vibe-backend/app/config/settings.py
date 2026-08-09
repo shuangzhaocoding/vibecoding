@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     email_code_expire_minutes: int = 10
     email_code_cooldown_seconds: int = 60
 
+    # 用于 sitemap / 绝对链接（如 https://vibecoding.yugongcoding.com）
+    public_base_url: str = "https://vibecoding.yugongcoding.com"
+
     @property
     def db_url(self) -> str:
         password = quote_plus(self.db_password)

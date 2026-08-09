@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """模型导出。"""
+from app.models.notification import Notification
 from app.models.project import Project, ProjectComment, ProjectFavorite, ProjectLike
+from app.models.report import ProjectReport
 from app.models.user import EmailCode, Permission, Role, User
 
 __all__ = [
@@ -12,4 +14,6 @@ __all__ = [
     "ProjectLike",
     "ProjectFavorite",
     "ProjectComment",
+    "Notification",
+    "ProjectReport",
 ]

@@ -680,6 +680,20 @@ select {
   background: var(--bg-muted);
 }
 
+button.tag,
+.tag-btn {
+  cursor: pointer;
+  font: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+button.tag:hover,
+.tag-btn:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: var(--primary-soft);
+}
+
 /* ranking */
 .rank-list {
   list-style: none;

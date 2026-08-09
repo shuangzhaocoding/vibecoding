@@ -28,3 +28,13 @@ class ProjectUpdate(BaseModel):
 class CommentCreate(BaseModel):
     content: str = Field(min_length=1, max_length=10000)
     parent_id: Optional[int] = None
+
+
+class ReportCreate(BaseModel):
+    reason: str = Field(min_length=1, max_length=32)
+    detail: Optional[str] = Field(default="", max_length=500)
+
+
+class ReportResolve(BaseModel):
+    action: str = Field(min_length=1, max_length=32)  # ignore / hide / delete
+    note: Optional[str] = Field(default="", max_length=500)

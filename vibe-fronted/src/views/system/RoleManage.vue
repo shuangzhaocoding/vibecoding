@@ -53,6 +53,7 @@
           <tiny-select v-model="form.data_scope" style="width:100%">
             <tiny-option v-for="s in scopes" :key="s" :label="t(`enum.data_scope.${s}`)" :value="s" />
           </tiny-select>
+          <div class="field-hint">{{ t('system.dataScopeHint') }}</div>
         </tiny-form-item>
       </tiny-form>
       <template #footer>
@@ -161,3 +162,12 @@ onMounted(async () => {
   await load()
 })
 </script>
+
+<style scoped>
+.field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+</style>

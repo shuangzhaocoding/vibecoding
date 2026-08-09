@@ -19,6 +19,15 @@
               <AppIcon name="reply" :size="14" />
               {{ t('project.reply') }}
             </button>
+            <button
+              v-if="canDelete"
+              type="button"
+              class="reply-btn danger"
+              @click="$emit('delete', comment)"
+            >
+              <AppIcon name="trash" :size="14" />
+              {{ t('common.delete') }}
+            </button>
           </div>
         </div>
       </div>
@@ -56,7 +65,9 @@
         :reply-target-id="replyTargetId"
         :reply-text="replyText"
         :commenting="commenting"
+        :can-delete-comment="canDeleteComment"
         @reply="$emit('reply', $event)"
+        @delete="$emit('delete', $event)"
         @cancel-reply="$emit('cancel-reply')"
         @submit-reply="$emit('submit-reply')"
         @update:reply-text="$emit('update:replyText', $event)"
@@ -78,12 +89,16 @@ const props = defineProps({
   replyTargetId: { type: [Number, String], default: null },
   replyText: { type: String, default: '' },
   commenting: { type: Boolean, default: false },
+  canDeleteComment: { type: Function, default: null },
 })
 
-defineEmits(['reply', 'cancel-reply', 'submit-reply', 'update:replyText'])
+defineEmits(['reply', 'delete', 'cancel-reply', 'submit-reply', 'update:replyText'])
 
 const { t } = useI18n()
 const isReplying = computed(() => props.replyTargetId === props.comment.id)
+const canDelete = computed(() =>
+  typeof props.canDeleteComment === 'function' ? !!props.canDeleteComment(props.comment) : false,
+)
 
 const avatarLetter = computed(() =>
   (props.comment.user?.display_name || props.comment.user?.username || '?').slice(0, 1).toUpperCase(),
@@ -184,6 +199,10 @@ export default {
 
 .reply-btn:hover {
   text-decoration: underline;
+}
+
+.reply-btn.danger {
+  color: var(--danger);
 }
 
 /* 仅一级下的二级缩进；二级及以下左对齐 */

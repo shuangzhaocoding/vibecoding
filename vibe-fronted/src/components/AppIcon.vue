@@ -212,6 +212,26 @@
       <path d="M4 8 7.2 3.8h9.6L20 8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
       <path d="M4 13h4.2l1.3 2h5l1.3-2H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
     </template>
+
+    <!-- bell / notifications -->
+    <template v-else-if="name === 'bell'">
+      <path d="M6.5 16.5h11l-1.2-1.8V10a4.3 4.3 0 1 0-8.6 0v4.7L6.5 16.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+      <path d="M10 18.2a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </template>
+
+    <!-- share -->
+    <template v-else-if="name === 'share'">
+      <circle cx="18" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.8" />
+      <circle cx="6" cy="12" r="2.2" stroke="currentColor" stroke-width="1.8" />
+      <circle cx="18" cy="18.5" r="2.2" stroke="currentColor" stroke-width="1.8" />
+      <path d="m8 11 8-4.5M8 13l8 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </template>
+
+    <!-- flag / report -->
+    <template v-else-if="name === 'flag'">
+      <path d="M6 4v16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      <path d="M6 5h10.5l-2.2 3.5L16.5 12H6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+    </template>
   </svg>
 </template>
 

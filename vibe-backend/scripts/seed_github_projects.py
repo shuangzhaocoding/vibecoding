@@ -36,10 +36,15 @@ from app.models import Project, User  # noqa: E402
 
 # GitHub 搜索查询（按星数排序后合并去重）
 DEFAULT_QUERIES = [
-    "topic:vibecoding",
-    "topic:vibe-coding",
-    "vibe-coding in:name,description stars:>20",
-    '"vibe coding" language:TypeScript stars:>100',
+    "topic:vibecoding stars:>50",
+    "topic:vibe-coding stars:>50",
+    "topic:ai-coding stars:>200",
+    "topic:agentic-coding stars:>80",
+    "topic:claude-code topic:ide stars:>50",
+    "vibe-coding in:name,description stars:>30",
+    "vibecoding in:name,description stars:>30",
+    '"vibe coding" language:TypeScript stars:>80',
+    "vibe coding agent stars:>100",
 ]
 
 # 搜索可能漏掉、但适合展示的仓库（full_name）
@@ -56,7 +61,48 @@ CURATED_REPOS = [
     "amantus-ai/vibetunnel",
     "Leonxlnx/taste-skill",
     "flipped-aurora/gin-vue-admin",
+    # 第二批：AI coding IDE / agent 工作流相关
+    "hanshuaikang/nezha",
+    "BloopAI/vibe-kanban",
+    "rtk-ai/rtk",
+    "stablyai/orca",
+    "winfunc/opcode",
+    "Kilo-Org/kilocode",
+    "QwenLM/qwen-code",
+    "mindfold-ai/Trellis",
+    "getagentseal/codeburn",
+    "Untrivial-ai/agent-orchestrator",
+    "jnMetaCode/superpowers-zh",
+    "zhukunpenglinyutong/desktop-cc-gui",
+    "yvgude/lean-ctx",
+    "stravu/crystal",
+    "collabs-inc/collab-public",
+    "superagent-ai/vibekit",
+    "the-open-engine/zeroshot",
+    "get-bb/bb",
+    "wrtnlabs/autobe",
+    "tirth8205/code-review-graph",
+    "kodu-ai/claude-coder",
+    "teaql/teaql-agent-kit",
+    "popup-studio-ai/bkit-claude-code",
+    "erha19/ping-island",
+    "elirantutia/vibeyard",
 ]
+
+# GitHub homepage 为空时的站点补全（full_name -> url）
+HOMEPAGE_OVERRIDES = {
+    "elirantutia/vibeyard": "https://vibeyard.app",
+}
+
+# 明确排除：主题漂移 / 资源站 / 非 vibe 作品
+DENY_REPOS = {
+    "medusajs/medusa",
+    "MARKTECHPOST-AI-MEDIA-INC/AI-Agents-Projects-Tutorials",
+    "metalbear-co/mirrord",
+    "ruvnet/ruflo",
+    "cobusgreyling/loop-engineering",
+    "VoltAgent/awesome-design-md",
+}
 
 # 名称/描述命中则跳过（列表型仓库、非作品）
 SKIP_NAME_KEYWORDS = (
@@ -66,6 +112,10 @@ SKIP_NAME_KEYWORDS = (
     "best_practice",
     "cheatsheet",
     "tutorial-only",
+    "ultimate-guide",
+    "tips",
+    "everything-you-need",
+    "projects-tutorials",
 )
 
 API_ROOT = "https://api.github.com"
@@ -112,20 +162,41 @@ def normalize_homepage(homepage: Optional[str], html_url: str) -> Optional[str]:
     return f"https://{hp}".rstrip("/")
 
 
+def effective_homepage(repo: Dict[str, Any]) -> Optional[str]:
+    full = repo.get("full_name") or ""
+    if full in HOMEPAGE_OVERRIDES:
+        return HOMEPAGE_OVERRIDES[full].rstrip("/")
+    return normalize_homepage(repo.get("homepage"), repo.get("html_url") or "")
+
+
 def should_skip(repo: Dict[str, Any], *, min_stars: int) -> Optional[str]:
     name = (repo.get("name") or "").lower()
-    full = (repo.get("full_name") or "").lower()
+    full = (repo.get("full_name") or "")
+    full_l = full.lower()
     desc = (repo.get("description") or "").lower()
     stars = int(repo.get("stargazers_count") or 0)
+    if full in DENY_REPOS or full_l in {x.lower() for x in DENY_REPOS}:
+        return "deny list"
     if stars < min_stars:
         return f"stars<{min_stars}"
     if repo.get("archived") or repo.get("disabled"):
         return "archived/disabled"
-    if not normalize_homepage(repo.get("homepage"), repo.get("html_url") or ""):
+    site = effective_homepage(repo)
+    if not site:
         return "no homepage"
+    site_l = site.lower()
+    # 非产品页：个人主页 / 论文页 / 指回 GitHub 仓库本身
+    if any(x in site_l for x in ("linkedin.com", "arxiv.org", "twitter.com", "x.com/")):
+        return "non-product homepage"
+    html_url = (repo.get("html_url") or "").rstrip("/").lower()
+    if site_l.rstrip("/") == html_url or site_l.startswith("https://github.com/"):
+        return "homepage is github"
     for kw in SKIP_NAME_KEYWORDS:
-        if kw in name or kw in full:
+        if kw in name or kw in full_l:
             return f"skip keyword:{kw}"
+    topics = {t.lower() for t in (repo.get("topics") or [])}
+    if topics & {"awesome-list", "awesome", "ecommerce", "e-commerce"}:
+        return "skip topic"
     # 纯资源列表：名字含 awesome 且简介像 curated list
     if "awesome" in name and ("list" in desc or "curated" in desc or "collection" in desc):
         return "awesome list"
@@ -173,7 +244,7 @@ def build_description(repo: Dict[str, Any]) -> str:
     stars = repo.get("stargazers_count") or 0
     lang = repo.get("language") or "-"
     topics = ", ".join((repo.get("topics") or [])[:12]) or "-"
-    site = normalize_homepage(repo.get("homepage"), repo["html_url"]) or repo["html_url"]
+    site = effective_homepage(repo) or repo["html_url"]
     return f"""## {repo.get('name')}
 
 {desc}
@@ -185,7 +256,7 @@ def build_description(repo: Dict[str, Any]) -> str:
 - **语言**: {lang}
 - **Topics**: {topics}
 
-> 由 `scripts/seed_github_projects.py` 从 GitHub 同步。
+> 来源：GitHub 开源项目
 """
 
 
@@ -260,7 +331,7 @@ async def upsert_projects(
         title = (repo.get("name") or repo["full_name"]).strip()[:200]
         # 更友好的展示名：owner/name 里取 name，保留原 description 在 summary
         display_title = title
-        site_url = normalize_homepage(repo.get("homepage"), repo["html_url"])
+        site_url = effective_homepage(repo)
         assert site_url  # should_skip 已保证
 
         exists = await Project.filter(

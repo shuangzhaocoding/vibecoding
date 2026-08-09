@@ -25,6 +25,7 @@ class UserUpdate(BaseModel):
 class RoleCreate(BaseModel):
     code: str
     name: str
+    # 预留字段：当前业务未按 data_scope 过滤，仅持久化供后续扩展
     data_scope: str = "reported"
 
 

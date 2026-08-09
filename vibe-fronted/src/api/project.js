@@ -1,6 +1,7 @@
 import request from './request'
 
 export const fetchProjects = (params) => request.get('/projects', { params })
+export const fetchProjectTags = (params) => request.get('/projects/tags', { params })
 export const fetchRanking = (params) => request.get('/projects/ranking', { params })
 export const fetchProject = (id) => request.get(`/projects/${id}`)
 export const createProject = (data) => request.post('/projects', data)
@@ -12,6 +13,11 @@ export const favoriteProject = (id) => request.post(`/projects/${id}/favorite`)
 export const unfavoriteProject = (id) => request.delete(`/projects/${id}/favorite`)
 export const fetchComments = (id, params) => request.get(`/projects/${id}/comments`, { params })
 export const createComment = (id, data) => request.post(`/projects/${id}/comments`, data)
+export const deleteComment = (projectId, commentId) =>
+  request.delete(`/projects/${projectId}/comments/${commentId}`)
+export const reportProject = (id, data) => request.post(`/projects/${id}/report`, data)
+export const fetchReports = (params) => request.get('/projects/reports', { params })
+export const resolveReport = (id, data) => request.post(`/projects/reports/${id}/resolve`, data)
 
 export const uploadFile = (file) => {
   const form = new FormData()

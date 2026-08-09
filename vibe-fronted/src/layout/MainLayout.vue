@@ -46,6 +46,7 @@
           :options="roleOptions"
           @change="onRoleChange"
         />
+        <NotificationBell v-if="userStore.isLogin" />
         <template v-if="userStore.isLogin">
           <div ref="userMenuRef" class="user-menu">
             <button
@@ -89,6 +90,7 @@
         <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
           <AppIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
         </button>
+        <NotificationBell v-if="userStore.isLogin" />
         <div v-if="userStore.isLogin" ref="mobileUserMenuRef" class="user-menu">
           <button
             type="button"
@@ -178,6 +180,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import ScrollFab from '@/components/ScrollFab.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import { useUserStore } from '@/stores/user'

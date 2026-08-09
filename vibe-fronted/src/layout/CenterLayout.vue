@@ -52,6 +52,9 @@ const menus = computed(() => {
   if (userStore.hasPerm('project:create')) {
     list.push({ to: '/center/publish', label: 'menu.publish', icon: 'plus' })
   }
+  if (userStore.hasPerm('project:manage')) {
+    list.push({ to: '/center/moderation', label: 'menu.moderation', icon: 'flag' })
+  }
   if (userStore.hasPerm('system:user:view')) list.push({ to: '/center/users', label: 'menu.users', icon: 'users' })
   if (userStore.hasPerm('system:role:view')) list.push({ to: '/center/roles', label: 'menu.roles', icon: 'shield' })
   if (userStore.hasPerm('system:perm:view')) list.push({ to: '/center/permissions', label: 'menu.permissions', icon: 'key' })

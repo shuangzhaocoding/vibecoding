@@ -44,6 +44,12 @@ const routes = [
         meta: { public: true },
       },
       {
+        path: 'authors/:id',
+        name: 'author',
+        component: () => import('@/views/project/Author.vue'),
+        meta: { public: true },
+      },
+      {
         path: 'center',
         component: () => import('@/layout/CenterLayout.vue'),
         meta: { auth: true },
@@ -72,6 +78,12 @@ const routes = [
             name: 'favorites',
             component: () => import('@/views/project/Favorites.vue'),
             meta: { auth: true },
+          },
+          {
+            path: 'moderation',
+            name: 'moderation',
+            component: () => import('@/views/project/Moderation.vue'),
+            meta: { auth: true, perm: 'project:manage' },
           },
           {
             path: 'publish',

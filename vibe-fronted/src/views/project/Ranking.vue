@@ -7,7 +7,7 @@
       </h2>
       <span class="ranking-hint">{{ t('project.rankingTop', { n: 100 }) }}</span>
     </div>
-    <div v-if="loading" class="empty-state">{{ t('common.loading') }}</div>
+    <AppLoading v-if="loading" />
     <div v-else-if="!items.length" class="empty-state">
       <AppIcon name="inbox" :size="36" />
       <span>{{ t('project.empty') }}</span>
@@ -23,6 +23,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchRanking } from '@/api/project'
 import AppIcon from '@/components/AppIcon.vue'
+import AppLoading from '@/components/AppLoading.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 
 const { t } = useI18n()

@@ -64,6 +64,12 @@ http {
         keepalive 16;
     }
 
+    # 社交/搜索爬虫访问作品详情时走 OG HTML，便于分享预览
+    map $http_user_agent $is_share_bot {
+        default 0;
+        ~*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|SkypeUriPreview|Googlebot|bingbot|Baiduspider|Sogou|YisouSpider|Bytespider|DuckDuckBot|Applebot|MicroMessenger|QQ/|meta-externalagent) 1;
+    }
+
     server {
         listen 80;
         server_name _;
@@ -85,6 +91,30 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Connection        "";
             proxy_pass http://vibe_api;
+        }
+
+        location = /sitemap.xml {
+            proxy_http_version 1.1;
+            proxy_set_header Host              $host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://vibe_api/sitemap.xml;
+        }
+
+        location ~ ^/projects/(?<pid>[0-9]+)$ {
+            error_page 418 = @project_og;
+            if ($is_share_bot) { return 418; }
+            try_files /index.html =404;
+        }
+
+        location @project_og {
+            proxy_http_version 1.1;
+            proxy_set_header Host              $host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://vibe_api/api/og/projects/$pid;
         }
 
         location / {
