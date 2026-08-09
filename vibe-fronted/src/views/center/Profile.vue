@@ -11,10 +11,10 @@
           </div>
           <div class="avatar-actions">
             <tiny-button :loading="uploading" @click="fileInput?.click()">
-              {{ t('profile.uploadAvatar') }}
+              <span class="icon-text"><AppIcon name="upload" :size="15" />{{ t('profile.uploadAvatar') }}</span>
             </tiny-button>
             <tiny-button v-if="form.avatar_url" plain @click="clearAvatar">
-              {{ t('profile.removeAvatar') }}
+              <span class="icon-text"><AppIcon name="trash" :size="15" />{{ t('profile.removeAvatar') }}</span>
             </tiny-button>
             <input ref="fileInput" type="file" accept="image/*" hidden @change="onAvatarFile" />
             <p class="hint">{{ t('profile.avatarHint') }}</p>
@@ -35,7 +35,7 @@
           </tiny-form-item>
           <tiny-form-item>
             <tiny-button type="primary" :loading="savingProfile" @click="saveProfile">
-              {{ t('profile.saveProfile') }}
+              <span class="icon-text"><AppIcon name="save" :size="15" />{{ t('profile.saveProfile') }}</span>
             </tiny-button>
           </tiny-form-item>
         </tiny-form>
@@ -55,7 +55,7 @@
           </tiny-form-item>
           <tiny-form-item>
             <tiny-button type="primary" :loading="savingPwd" @click="savePassword">
-              {{ t('profile.savePassword') }}
+              <span class="icon-text"><AppIcon name="lock" :size="15" />{{ t('profile.savePassword') }}</span>
             </tiny-button>
           </tiny-form-item>
         </tiny-form>
@@ -68,6 +68,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal } from '@opentiny/vue'
+import AppIcon from '@/components/AppIcon.vue'
 import { changePasswordApi, uploadAvatarApi } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 

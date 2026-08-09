@@ -20,6 +20,7 @@
         :class="{ active: isMenuActive(item) }"
         @click="menuOpen = false"
       >
+        <AppIcon :name="item.icon" :size="16" />
         {{ t(item.label) }}
       </router-link>
     </aside>
@@ -33,6 +34,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import AppIcon from '@/components/AppIcon.vue'
 import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
@@ -42,17 +44,17 @@ const menuOpen = ref(false)
 
 const menus = computed(() => {
   const list = [
-    { to: '/center/profile', label: 'menu.profile' },
-    { to: '/center/mine', label: 'menu.mine' },
-    { to: '/center/likes', label: 'menu.likes' },
-    { to: '/center/favorites', label: 'menu.favorites' },
+    { to: '/center/profile', label: 'menu.profile', icon: 'user' },
+    { to: '/center/mine', label: 'menu.mine', icon: 'publish' },
+    { to: '/center/likes', label: 'menu.likes', icon: 'heart' },
+    { to: '/center/favorites', label: 'menu.favorites', icon: 'star' },
   ]
   if (userStore.hasPerm('project:create')) {
-    list.push({ to: '/center/publish', label: 'menu.publish' })
+    list.push({ to: '/center/publish', label: 'menu.publish', icon: 'plus' })
   }
-  if (userStore.hasPerm('system:user:view')) list.push({ to: '/center/users', label: 'menu.users' })
-  if (userStore.hasPerm('system:role:view')) list.push({ to: '/center/roles', label: 'menu.roles' })
-  if (userStore.hasPerm('system:perm:view')) list.push({ to: '/center/permissions', label: 'menu.permissions' })
+  if (userStore.hasPerm('system:user:view')) list.push({ to: '/center/users', label: 'menu.users', icon: 'users' })
+  if (userStore.hasPerm('system:role:view')) list.push({ to: '/center/roles', label: 'menu.roles', icon: 'shield' })
+  if (userStore.hasPerm('system:perm:view')) list.push({ to: '/center/permissions', label: 'menu.permissions', icon: 'key' })
   return list
 })
 

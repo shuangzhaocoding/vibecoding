@@ -12,6 +12,7 @@
           @keyup.enter="onSearch"
         />
         <button type="button" class="search-box-btn" @click="onSearch">
+          <AppIcon name="search" :size="16" />
           {{ t('project.searchAction') }}
         </button>
       </div>
@@ -20,10 +21,15 @@
     <section v-if="searching" class="page-panel">
       <div class="page-toolbar">
         <h2 class="section-title">{{ t('project.searchResult') }}</h2>
-        <tiny-button plain @click="clearSearch">{{ t('common.reset') }}</tiny-button>
+        <tiny-button plain @click="clearSearch">
+          <span class="icon-text"><AppIcon name="refresh" :size="15" />{{ t('common.reset') }}</span>
+        </tiny-button>
       </div>
       <div v-if="loading" class="empty-state">{{ t('common.loading') }}</div>
-      <div v-else-if="!items.length" class="empty-state">{{ t('project.empty') }}</div>
+      <div v-else-if="!items.length" class="empty-state">
+        <AppIcon name="inbox" :size="36" />
+        <span>{{ t('project.empty') }}</span>
+      </div>
       <div v-else class="project-grid">
         <ProjectCard v-for="p in items" :key="p.id" :project="p" />
       </div>
@@ -41,10 +47,16 @@
     <section v-else>
       <div class="page-toolbar">
         <h2 class="section-title">{{ t('project.popularSection') }}</h2>
-        <router-link class="link-more" :to="{ name: 'ranking' }">{{ t('project.viewRanking') }}</router-link>
+        <router-link class="link-more" :to="{ name: 'ranking' }">
+          <AppIcon name="ranking" :size="15" />
+          {{ t('project.viewRanking') }}
+        </router-link>
       </div>
       <div v-if="loadingPopular" class="empty-state">{{ t('common.loading') }}</div>
-      <div v-else-if="!popular.length" class="empty-state">{{ t('project.empty') }}</div>
+      <div v-else-if="!popular.length" class="empty-state">
+        <AppIcon name="inbox" :size="36" />
+        <span>{{ t('project.empty') }}</span>
+      </div>
       <div v-else class="project-grid">
         <ProjectCard v-for="p in popular" :key="p.id" :project="p" />
       </div>

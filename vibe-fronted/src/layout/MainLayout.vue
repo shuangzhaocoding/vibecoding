@@ -24,13 +24,14 @@
             class="top-nav-link"
             :class="{ active: isTopActive(item) }"
           >
+            <AppIcon :name="item.icon" :size="16" />
             {{ t(item.label) }}
           </router-link>
         </nav>
       </div>
       <div class="layout-actions desktop-actions">
         <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
-          {{ theme === 'dark' ? '☀' : '☾' }}
+          <AppIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
         </button>
         <tiny-select
           class="action-select action-select-locale"
@@ -65,22 +66,28 @@
                 to="/center/profile"
                 @click="userMenuOpen = false"
               >
+                <AppIcon name="user" :size="15" />
                 {{ t('menu.profile') }}
               </router-link>
               <button type="button" class="user-menu-item danger" role="menuitem" @click="onLogout">
+                <AppIcon name="logout" :size="15" />
                 {{ t('app.logout') }}
               </button>
             </div>
           </div>
         </template>
         <template v-else>
-          <tiny-button type="primary" plain @click="router.push({ name: 'login' })">{{ t('app.login') }}</tiny-button>
-          <tiny-button type="primary" @click="router.push({ name: 'register' })">{{ t('app.register') }}</tiny-button>
+          <tiny-button type="primary" plain @click="router.push({ name: 'login' })">
+            <span class="icon-text"><AppIcon name="user" :size="15" />{{ t('app.login') }}</span>
+          </tiny-button>
+          <tiny-button type="primary" @click="router.push({ name: 'register' })">
+            <span class="icon-text"><AppIcon name="plus" :size="15" />{{ t('app.register') }}</span>
+          </tiny-button>
         </template>
       </div>
       <div class="layout-actions mobile-actions">
         <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
-          {{ theme === 'dark' ? '☀' : '☾' }}
+          <AppIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
         </button>
         <div v-if="userStore.isLogin" ref="mobileUserMenuRef" class="user-menu">
           <button
@@ -100,16 +107,18 @@
               to="/center/profile"
               @click="mobileUserMenuOpen = false"
             >
+              <AppIcon name="user" :size="15" />
               {{ t('menu.profile') }}
             </router-link>
             <button type="button" class="user-menu-item danger" role="menuitem" @click="onLogout">
+              <AppIcon name="logout" :size="15" />
               {{ t('app.logout') }}
             </button>
           </div>
         </div>
         <template v-else>
           <tiny-button type="primary" plain size="mini" @click="router.push({ name: 'login' })">
-            {{ t('app.login') }}
+            <span class="icon-text"><AppIcon name="user" :size="14" />{{ t('app.login') }}</span>
           </tiny-button>
         </template>
       </div>
@@ -126,6 +135,7 @@
           :class="{ active: isTopActive(item) }"
           @click="menuOpen = false"
         >
+          <AppIcon :name="item.icon" :size="16" />
           {{ t(item.label) }}
         </router-link>
       </nav>
@@ -167,6 +177,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import AppIcon from '@/components/AppIcon.vue'
 import ScrollFab from '@/components/ScrollFab.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import { useUserStore } from '@/stores/user'
@@ -200,8 +211,8 @@ const userAvatarStyle = computed(() => {
 })
 
 const topMenus = [
-  { to: '/', name: 'plaza', label: 'menu.home' },
-  { to: '/ranking', name: 'ranking', label: 'menu.ranking' },
+  { to: '/', name: 'plaza', label: 'menu.home', icon: 'home' },
+  { to: '/ranking', name: 'ranking', label: 'menu.ranking', icon: 'ranking' },
 ]
 
 const isCenter = computed(() => route.path.startsWith('/center'))
@@ -374,7 +385,9 @@ onUnmounted(() => {
 }
 
 .user-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
   padding: 9px 12px;

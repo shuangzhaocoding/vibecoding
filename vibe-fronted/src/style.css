@@ -213,6 +213,27 @@ select {
   padding: 48px 16px;
   text-align: center;
   color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.empty-state .app-icon {
+  opacity: 0.45;
+  color: var(--text-muted);
+}
+
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .pager-wrap {
@@ -279,6 +300,9 @@ select {
 }
 
 .top-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 14px;
   border-radius: 8px;
   color: var(--text-secondary);
@@ -389,7 +413,9 @@ select {
 }
 
 .center-aside .menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 14px;
   border-radius: 8px;
   color: var(--text-secondary);
@@ -528,6 +554,10 @@ select {
 
 .search-box-btn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 44px;
   min-width: 96px;
   padding: 0 26px;
@@ -1209,7 +1239,9 @@ select {
   }
 
   .mobile-drawer-link {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 12px 14px;
     border-radius: 8px;
     color: var(--text-secondary);

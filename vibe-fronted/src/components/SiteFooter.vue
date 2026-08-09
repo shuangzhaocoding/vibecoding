@@ -10,7 +10,10 @@
           <h3>{{ t('footer.linksTitle') }}</h3>
           <ul class="friend-links">
             <li v-for="link in friendLinks" :key="link.url">
-              <a :href="link.url" target="_blank" rel="noopener noreferrer">{{ link.name }}</a>
+              <a :href="link.url" target="_blank" rel="noopener noreferrer" class="friend-link">
+                {{ link.name }}
+                <AppIcon name="link" :size="12" />
+              </a>
             </li>
           </ul>
         </section>
@@ -30,6 +33,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import AppIcon from '@/components/AppIcon.vue'
 
 const { t } = useI18n()
 
@@ -84,7 +88,11 @@ const friendLinks = [
   gap: 8px;
 }
 
-.friend-links a {
+.friend-links a,
+.friend-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   color: var(--text-secondary);
   transition: color 0.15s ease;

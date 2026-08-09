@@ -9,7 +9,9 @@
         <tiny-form-item :label="t('project.cover')">
           <div class="cover-upload">
             <img v-if="form.cover_url" :src="form.cover_url" class="cover-preview" alt="cover" />
-            <tiny-button :loading="uploading" @click="fileInput.click()">{{ t('project.uploadCover') }}</tiny-button>
+            <tiny-button :loading="uploading" @click="fileInput.click()">
+              <span class="icon-text"><AppIcon name="upload" :size="15" />{{ t('project.uploadCover') }}</span>
+            </tiny-button>
             <input ref="fileInput" type="file" accept="image/*" hidden @change="onFile" />
           </div>
         </tiny-form-item>
@@ -38,8 +40,12 @@
           </tiny-select>
         </tiny-form-item>
         <tiny-form-item>
-          <tiny-button @click="$router.back()">{{ t('common.cancel') }}</tiny-button>
-          <tiny-button type="primary" :loading="saving" @click="onSave">{{ t('common.save') }}</tiny-button>
+          <tiny-button @click="$router.back()">
+            <span class="icon-text"><AppIcon name="close" :size="15" />{{ t('common.cancel') }}</span>
+          </tiny-button>
+          <tiny-button type="primary" :loading="saving" @click="onSave">
+            <span class="icon-text"><AppIcon name="save" :size="15" />{{ t('common.save') }}</span>
+          </tiny-button>
         </tiny-form-item>
       </tiny-form>
     </div>
@@ -48,6 +54,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import AppIcon from '@/components/AppIcon.vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { Modal } from '@opentiny/vue'

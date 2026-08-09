@@ -16,6 +16,7 @@
           <RichHtml class="comment-content" :html="comment.content" mode="simple" />
           <div class="comment-actions">
             <button type="button" class="reply-btn" @click="$emit('reply', comment)">
+              <AppIcon name="reply" :size="14" />
               {{ t('project.reply') }}
             </button>
           </div>
@@ -67,6 +68,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppIcon from '@/components/AppIcon.vue'
 import RichEditor from '@/components/RichEditor.vue'
 import RichHtml from '@/components/RichHtml.vue'
 
@@ -169,6 +171,9 @@ export default {
 }
 
 .reply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   border: 0;
   background: transparent;
   color: var(--primary);

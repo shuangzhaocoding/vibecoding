@@ -3,7 +3,7 @@
     <AuthScene />
     <div class="auth-locale">
       <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
-        {{ theme === 'dark' ? '☀' : '☾' }}
+        <AppIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
       </button>
       <tiny-select :model-value="locale" :options="localeOptions" style="width:120px" @change="onLocaleChange" />
     </div>
@@ -38,7 +38,8 @@
               :placeholder="t('auth.codePlaceholder')"
             />
             <tiny-button :disabled="cooldown > 0 || sending" :reset-time="0" @click="onSendCode">
-              {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
+              <span v-if="cooldown > 0">{{ cooldown }}s</span>
+              <span v-else class="icon-text"><AppIcon name="mail" :size="14" />{{ t('auth.sendCode') }}</span>
             </tiny-button>
           </div>
         </tiny-form-item>
@@ -61,7 +62,7 @@
           />
         </tiny-form-item>
         <tiny-button type="primary" style="width:100%" :loading="loading" :reset-time="0" @click="onSubmit">
-          {{ t('auth.register') }}
+          <span class="icon-text"><AppIcon name="plus" :size="15" />{{ t('auth.register') }}</span>
         </tiny-button>
       </tiny-form>
       <p class="auth-link">
@@ -81,6 +82,7 @@ import { sendCodeApi } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 import { localeOptions, setLocale } from '@/locales'
 import { resolveHomeRoute } from '@/utils/access'
+import AppIcon from '@/components/AppIcon.vue'
 import AuthScene from '@/components/AuthScene.vue'
 import { getStoredTheme, toggleTheme } from '@/utils/theme'
 

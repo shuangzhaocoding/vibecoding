@@ -4,7 +4,7 @@
       <div class="page-toolbar">
         <h2 class="page-title">{{ t('system.roles') }}</h2>
         <tiny-button v-if="userStore.hasPerm('system:role:manage')" type="primary" @click="openCreate">
-          {{ t('common.create') }}
+          <span class="icon-text"><AppIcon name="plus" :size="15" />{{ t('common.create') }}</span>
         </tiny-button>
       </div>
       <tiny-grid :data="items" border size="small" style="margin-top:16px">
@@ -19,16 +19,18 @@
         <tiny-grid-column :title="t('common.actions')" width="240">
           <template #default="{ row }">
             <tiny-button v-if="userStore.hasPerm('system:role:manage')" type="text" @click.stop="openEdit(row)">
-              {{ t('common.edit') }}
+              <span class="icon-text"><AppIcon name="edit" :size="14" />{{ t('common.edit') }}</span>
             </tiny-button>
             <tiny-button v-if="userStore.hasPerm('system:perm:assign')" type="text" @click.stop="openPerm(row)">
-              {{ t('system.permissions') }}
+              <span class="icon-text"><AppIcon name="key" :size="14" />{{ t('system.permissions') }}</span>
             </tiny-button>
             <tiny-button
               v-if="userStore.hasPerm('system:role:manage') && !row.is_system"
               type="text"
               @click.stop="onDelete(row)"
-            >{{ t('common.delete') }}</tiny-button>
+            >
+              <span class="icon-text"><AppIcon name="trash" :size="14" />{{ t('common.delete') }}</span>
+            </tiny-button>
           </template>
         </tiny-grid-column>
       </tiny-grid>
@@ -81,6 +83,7 @@ import {
   fetchRoles,
   updateRole,
 } from '@/api/system'
+import AppIcon from '@/components/AppIcon.vue'
 import PermissionCheckbox from '@/components/PermissionCheckbox.vue'
 import { useUserStore } from '@/stores/user'
 

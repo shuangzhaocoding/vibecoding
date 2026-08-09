@@ -90,7 +90,7 @@
             />
             <div class="comment-form-actions">
               <tiny-button type="primary" :loading="commenting" @click="submitComment">
-                {{ t('project.submitComment') }}
+                <span class="icon-text"><AppIcon name="comment" :size="15" />{{ t('project.submitComment') }}</span>
               </tiny-button>
             </div>
           </div>

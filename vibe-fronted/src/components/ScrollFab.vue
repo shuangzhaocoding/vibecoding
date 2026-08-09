@@ -1,10 +1,10 @@
 <template>
   <div v-show="visible" class="scroll-fab" role="group" :aria-label="t('app.scrollNav')">
     <button type="button" class="scroll-fab-btn" :title="t('app.scrollTop')" @click="toTop">
-      ↑
+      <AppIcon name="arrow-up" :size="18" />
     </button>
     <button type="button" class="scroll-fab-btn" :title="t('app.scrollBottom')" @click="toBottom">
-      ↓
+      <AppIcon name="arrow-down" :size="18" />
     </button>
   </div>
 </template>
@@ -12,6 +12,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppIcon from '@/components/AppIcon.vue'
 
 const { t } = useI18n()
 const visible = ref(false)
@@ -70,8 +71,8 @@ onUnmounted(() => {
   color: var(--text);
   box-shadow: var(--shadow-md);
   cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
+  display: grid;
+  place-items: center;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 

@@ -4,7 +4,7 @@
       <div class="page-toolbar">
         <h2 class="page-title">{{ t('system.permissionsManage') }}</h2>
         <tiny-button v-if="userStore.hasPerm('system:perm:manage')" type="primary" @click="openCreate">
-          {{ t('common.create') }}
+          <span class="icon-text"><AppIcon name="plus" :size="15" />{{ t('common.create') }}</span>
         </tiny-button>
       </div>
       <div class="filter-row" style="margin-top:16px">
@@ -22,10 +22,10 @@
         <tiny-grid-column :title="t('common.actions')" width="160" fixed="right">
           <template #default="{ row }">
             <tiny-button v-if="userStore.hasPerm('system:perm:manage')" type="text" @click.stop="openEdit(row)">
-              {{ t('common.edit') }}
+              <span class="icon-text"><AppIcon name="edit" :size="14" />{{ t('common.edit') }}</span>
             </tiny-button>
             <tiny-button v-if="userStore.hasPerm('system:perm:manage')" type="text" @click.stop="onDelete(row)">
-              {{ t('common.delete') }}
+              <span class="icon-text"><AppIcon name="trash" :size="14" />{{ t('common.delete') }}</span>
             </tiny-button>
           </template>
         </tiny-grid-column>
@@ -64,6 +64,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal } from '@opentiny/vue'
 import { createPermission, deletePermission, fetchPermissions, updatePermission } from '@/api/system'
+import AppIcon from '@/components/AppIcon.vue'
 import { useUserStore } from '@/stores/user'
 
 const { t, te } = useI18n()

@@ -5,8 +5,12 @@
       <h2 class="page-title">{{ t('errorPage.forbiddenTitle') }}</h2>
       <p class="error-desc">{{ t('errorPage.forbiddenDesc') }}</p>
       <div class="error-actions">
-        <tiny-button type="primary" @click="goHome">{{ t('errorPage.backHome') }}</tiny-button>
-        <tiny-button v-if="userStore.isLogin" @click="onLogout">{{ t('app.logout') }}</tiny-button>
+        <tiny-button type="primary" @click="goHome">
+          <span class="icon-text"><AppIcon name="home" :size="15" />{{ t('errorPage.backHome') }}</span>
+        </tiny-button>
+        <tiny-button v-if="userStore.isLogin" @click="onLogout">
+          <span class="icon-text"><AppIcon name="logout" :size="15" />{{ t('app.logout') }}</span>
+        </tiny-button>
       </div>
     </div>
   </div>
@@ -15,6 +19,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import AppIcon from '@/components/AppIcon.vue'
 import { useUserStore } from '@/stores/user'
 import { resolveHomeRoute } from '@/utils/access'
 

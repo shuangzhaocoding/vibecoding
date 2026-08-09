@@ -3,7 +3,7 @@
     <AuthScene />
     <div class="auth-locale">
       <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
-        {{ theme === 'dark' ? '☀' : '☾' }}
+        <AppIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
       </button>
       <tiny-select :model-value="locale" :options="localeOptions" style="width:120px" @change="onLocaleChange" />
     </div>
@@ -39,7 +39,7 @@
           <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
         </div>
         <tiny-button type="primary" style="width:100%" :loading="loading" :reset-time="0" @click="onSubmit">
-          {{ t('auth.login') }}
+          <span class="icon-text"><AppIcon name="user" :size="15" />{{ t('auth.login') }}</span>
         </tiny-button>
       </tiny-form>
       <p class="auth-link">
@@ -57,6 +57,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { localeOptions, setLocale } from '@/locales'
 import { resolveHomeRoute } from '@/utils/access'
+import AppIcon from '@/components/AppIcon.vue'
 import AuthScene from '@/components/AuthScene.vue'
 import { getStoredTheme, toggleTheme } from '@/utils/theme'
 

@@ -2,7 +2,10 @@
   <div class="page">
     <div class="page-panel">
       <h2 class="page-title">{{ t('menu.likes') }}</h2>
-      <div v-if="!items.length" class="empty-state">{{ t('project.empty') }}</div>
+      <div v-if="!items.length" class="empty-state">
+        <AppIcon name="heart" :size="36" />
+        <span>{{ t('project.empty') }}</span>
+      </div>
       <div v-else class="project-grid">
         <ProjectCard v-for="p in items" :key="p.id" :project="p" />
       </div>
@@ -14,6 +17,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchProjects } from '@/api/project'
+import AppIcon from '@/components/AppIcon.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 
 const { t } = useI18n()
