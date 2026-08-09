@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     APP_HOST=127.0.0.1 \
     APP_PORT=8000 \
-    APP_WORKERS=4
+    APP_WORKERS=1
 
 # apt 清华源（基础镜像为 Debian/Ubuntu 类时生效）
 RUN if [ -f /etc/apt/sources.list ]; then \
