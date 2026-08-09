@@ -4,13 +4,16 @@
       <h1>{{ t('app.title') }}</h1>
       <p>{{ t('app.slogan') }}</p>
       <div class="search-box">
+        <AppIcon class="search-box-icon" name="search" :size="20" />
         <tiny-input
           v-model="keyword"
           :placeholder="t('project.search')"
           clearable
           @keyup.enter="onSearch"
         />
-        <tiny-button type="primary" @click="onSearch">{{ t('common.search') }}</tiny-button>
+        <button type="button" class="search-box-btn" @click="onSearch">
+          {{ t('project.searchAction') }}
+        </button>
       </div>
     </section>
 
@@ -53,6 +56,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchProjects, fetchRanking } from '@/api/project'
+import AppIcon from '@/components/AppIcon.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 
 const { t } = useI18n()
@@ -125,5 +129,9 @@ onMounted(loadPopular)
 
 .section-title {
   margin: 0;
+}
+
+.search-box-icon {
+  display: block;
 }
 </style>

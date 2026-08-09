@@ -1,0 +1,16 @@
+.git
+.idea
+.vscode
+**/.DS_Store
+**/*.log
+**/__pycache__
+**/*.py[cod]
+venv/
+**/venv/
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+!**/.env.example
+.cursor/
+agent-transcripts/

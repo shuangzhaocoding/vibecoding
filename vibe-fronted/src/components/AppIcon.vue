@@ -8,8 +8,14 @@
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
   >
+    <!-- search -->
+    <template v-if="name === 'search'">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" />
+      <path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </template>
+
     <!-- eye / views -->
-    <template v-if="name === 'eye'">
+    <template v-else-if="name === 'eye'">
       <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
       <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
     </template>

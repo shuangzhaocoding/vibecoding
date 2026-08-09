@@ -428,8 +428,8 @@ select {
 
 /* —— home —— */
 .home-search {
-  max-width: 640px;
-  margin: 0 auto 36px;
+  max-width: 760px;
+  margin: 0 auto 40px;
   text-align: center;
 }
 
@@ -441,31 +441,102 @@ select {
 }
 
 .home-search p {
-  margin: 0 0 24px;
+  margin: 0 0 28px;
   color: var(--text-secondary);
   font-size: 15px;
 }
 
 .search-box {
   display: flex;
-  gap: 10px;
   align-items: center;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #eee;
   border-radius: 999px;
-  padding: 6px 6px 6px 18px;
-  box-shadow: var(--shadow);
+  padding: 8px 8px 8px 20px;
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.06);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.search-box:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 28%, #eee);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.1);
+}
+
+.search-box-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
 }
 
 .search-box .tiny-input {
   flex: 1;
+  min-width: 0;
 }
 
 .search-box :deep(.tiny-input__inner),
-.search-box .tiny-input__inner {
+.search-box .tiny-input__inner,
+.search-box :deep(.tiny-input input),
+.search-box .tiny-input input {
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  font-size: 16px !important;
+  color: var(--text) !important;
+  padding-left: 0 !important;
+  padding-right: 8px !important;
+}
+
+.search-box :deep(.tiny-input__inner::placeholder),
+.search-box .tiny-input__inner::placeholder,
+.search-box :deep(.tiny-input input::placeholder),
+.search-box .tiny-input input::placeholder {
+  color: #b0b6c0 !important;
+}
+
+.search-box-btn {
+  flex-shrink: 0;
+  height: 44px;
+  min-width: 96px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 999px;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.28);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.search-box-btn:hover {
+  background: #1558c0;
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.34);
+}
+
+.search-box-btn:active {
+  transform: scale(0.98);
+}
+
+[data-theme='dark'] .search-box {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme='dark'] .search-box-icon {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] .search-box-btn {
+  background: var(--primary);
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.22);
+}
+
+[data-theme='dark'] .search-box-btn:hover {
+  background: var(--primary-hover);
 }
 
 /* —— cards —— */
@@ -982,22 +1053,38 @@ select {
   }
 
   .home-search {
-    margin-bottom: 24px;
+    max-width: none;
+    margin-bottom: 28px;
   }
 
   .home-search h1 {
     font-size: 26px;
   }
 
-  .search-box {
-    border-radius: 12px;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px;
+  .home-search p {
+    margin-bottom: 20px;
   }
 
-  .search-box .tiny-button {
-    width: 100%;
+  .search-box {
+    border-radius: 18px;
+    padding: 10px 10px 10px 16px;
+    gap: 8px;
+  }
+
+  .search-box :deep(.tiny-input__inner),
+  .search-box .tiny-input__inner,
+  .search-box :deep(.tiny-input input),
+  .search-box .tiny-input input {
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 15px !important;
+  }
+
+  .search-box-btn {
+    height: 40px;
+    min-width: 78px;
+    padding: 0 18px;
+    font-size: 14px;
   }
 
   .rank-item {
