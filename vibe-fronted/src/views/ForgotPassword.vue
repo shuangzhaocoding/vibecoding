@@ -10,28 +10,56 @@
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.resetTitle') }}</h1>
       <p class="auth-desc">{{ t('auth.resetHint') }}</p>
-      <tiny-form label-position="top" @submit.prevent>
-        <tiny-form-item :label="t('auth.email')">
-          <tiny-input v-model="form.email" :placeholder="t('auth.emailPlaceholder')" />
-        </tiny-form-item>
-        <tiny-form-item :label="t('auth.code')">
-          <div class="code-row">
-            <tiny-input v-model="form.code" :placeholder="t('auth.code')" />
-            <tiny-button :disabled="cooldown > 0 || sending" @click="onSendCode">
-              {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
-            </tiny-button>
-          </div>
-        </tiny-form-item>
-        <tiny-form-item :label="t('auth.newPassword')">
-          <tiny-input v-model="form.new_password" type="password" show-password />
-        </tiny-form-item>
-        <tiny-form-item :label="t('auth.confirmPassword')">
-          <tiny-input v-model="form.confirm" type="password" show-password />
-        </tiny-form-item>
-        <tiny-button type="primary" style="width:100%" :loading="loading" @click="onSubmit">
-          {{ t('auth.resetPassword') }}
-        </tiny-button>
-      </tiny-form>
+      <form autocomplete="off" @submit.prevent="onSubmit">
+        <tiny-form label-position="top">
+          <tiny-form-item :label="t('auth.email')">
+            <tiny-input
+              v-model="form.email"
+              name="reset-email"
+              type="email"
+              autocomplete="email"
+              :placeholder="t('auth.emailPlaceholder')"
+            />
+          </tiny-form-item>
+          <tiny-form-item :label="t('auth.code')">
+            <div class="code-row">
+              <tiny-input
+                v-model="form.code"
+                name="reset-otp"
+                autocomplete="one-time-code"
+                inputmode="numeric"
+                :placeholder="t('auth.codePlaceholder')"
+              />
+              <tiny-button :disabled="cooldown > 0 || sending" @click="onSendCode">
+                {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
+              </tiny-button>
+            </div>
+          </tiny-form-item>
+          <tiny-form-item :label="t('auth.newPassword')">
+            <tiny-input
+              v-model="form.new_password"
+              type="password"
+              show-password
+              name="reset-new-password"
+              autocomplete="new-password"
+              :placeholder="t('auth.newPasswordPlaceholder')"
+            />
+          </tiny-form-item>
+          <tiny-form-item :label="t('auth.confirmPassword')">
+            <tiny-input
+              v-model="form.confirm"
+              type="password"
+              show-password
+              name="reset-confirm-password"
+              autocomplete="new-password"
+              :placeholder="t('auth.confirmPasswordPlaceholder')"
+            />
+          </tiny-form-item>
+          <tiny-button type="primary" native-type="submit" style="width:100%" :loading="loading">
+            {{ t('auth.resetPassword') }}
+          </tiny-button>
+        </tiny-form>
+      </form>
       <p class="auth-link">
         <router-link :to="{ name: 'login' }">{{ t('auth.toLogin') }}</router-link>
       </p>
@@ -41,7 +69,7 @@
 </template>
 
 <script setup>
-import { onUnmounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Modal } from '@opentiny/vue'
@@ -131,6 +159,24 @@ async function onSubmit() {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  const lastAccount = localStorage.getItem('vibe_last_account') || ''
+  // 若上次登录用的是邮箱，预填到邮箱框；勿让浏览器填进验证码框
+  if (lastAccount.includes('@')) {
+    form.email = lastAccount
+  }
+  await nextTick()
+  if (form.code && (form.code === lastAccount || form.code === form.email)) {
+    form.code = ''
+  }
+  // 再清一次，覆盖部分浏览器延迟自动填充
+  setTimeout(() => {
+    if (form.code && (form.code === lastAccount || form.code === form.email || form.code.includes('@'))) {
+      form.code = ''
+    }
+  }, 100)
+})
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)

@@ -9,30 +9,38 @@
     <div class="auth-card">
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.loginTitle') }}</h1>
-      <tiny-form label-position="top" @submit.prevent>
-        <tiny-form-item :label="t('auth.account')">
-          <tiny-input
-            v-model="form.username"
-            :placeholder="t('auth.accountPlaceholder')"
-            @keyup.enter="onSubmit"
-          />
-        </tiny-form-item>
-        <tiny-form-item :label="t('auth.password')">
-          <tiny-input
-            v-model="form.password"
-            type="password"
-            show-password
-            :placeholder="t('auth.password')"
-            @keyup.enter="onSubmit"
-          />
-        </tiny-form-item>
-        <div class="auth-extra">
-          <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
-        </div>
-        <tiny-button type="primary" style="width:100%" :loading="loading" @click="onSubmit">
-          {{ t('auth.login') }}
-        </tiny-button>
-      </tiny-form>
+      <form autocomplete="on" @submit.prevent="onSubmit">
+        <tiny-form label-position="top">
+          <tiny-form-item :label="t('auth.account')">
+            <tiny-input
+              v-model="form.username"
+              name="username"
+              autocomplete="username"
+              :placeholder="t('auth.accountPlaceholder')"
+            />
+          </tiny-form-item>
+          <tiny-form-item :label="t('auth.password')">
+            <tiny-input
+              v-model="form.password"
+              type="password"
+              show-password
+              name="password"
+              autocomplete="current-password"
+              :placeholder="t('auth.password')"
+            />
+          </tiny-form-item>
+          <div class="auth-extra">
+            <label class="remember-account">
+              <input v-model="rememberAccount" type="checkbox" />
+              <span>{{ t('auth.rememberAccount') }}</span>
+            </label>
+            <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
+          </div>
+          <tiny-button type="primary" native-type="submit" style="width:100%" :loading="loading">
+            {{ t('auth.login') }}
+          </tiny-button>
+        </tiny-form>
+      </form>
       <p class="auth-link">
         <router-link :to="{ name: 'register' }">{{ t('auth.toRegister') }}</router-link>
       </p>
@@ -42,13 +50,16 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { localeOptions, setLocale } from '@/locales'
 import { resolveHomeRoute } from '@/utils/access'
 import { getStoredTheme, toggleTheme } from '@/utils/theme'
+
+const LAST_ACCOUNT_KEY = 'vibe_last_account'
+const REMEMBER_ACCOUNT_KEY = 'vibe_remember_account'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -57,8 +68,17 @@ const userStore = useUserStore()
 const theme = ref(getStoredTheme())
 
 const form = reactive({ username: '', password: '' })
+const rememberAccount = ref(true)
 const loading = ref(false)
 const error = ref('')
+
+onMounted(() => {
+  const remember = localStorage.getItem(REMEMBER_ACCOUNT_KEY)
+  rememberAccount.value = remember !== '0'
+  if (rememberAccount.value) {
+    form.username = localStorage.getItem(LAST_ACCOUNT_KEY) || ''
+  }
+})
 
 function onLocaleChange(val) {
   setLocale(val)
@@ -72,7 +92,14 @@ async function onSubmit() {
   loading.value = true
   error.value = ''
   try {
-    await userStore.login(form.username, form.password)
+    const account = form.username.trim()
+    await userStore.login(account, form.password)
+    localStorage.setItem(REMEMBER_ACCOUNT_KEY, rememberAccount.value ? '1' : '0')
+    if (rememberAccount.value) {
+      localStorage.setItem(LAST_ACCOUNT_KEY, account)
+    } else {
+      localStorage.removeItem(LAST_ACCOUNT_KEY)
+    }
     const redirect = route.query.redirect
     if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
       router.replace(redirect)
@@ -90,16 +117,33 @@ async function onSubmit() {
 <style scoped>
 .auth-extra {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   margin: -4px 0 14px;
   font-size: 13px;
 }
 
 .auth-extra a {
   color: var(--primary);
+  flex-shrink: 0;
 }
 
 .auth-extra a:hover {
   text-decoration: underline;
+}
+
+.remember-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-account input {
+  margin: 0;
+  cursor: pointer;
 }
 </style>
