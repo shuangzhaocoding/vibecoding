@@ -9,62 +9,60 @@
     <div class="auth-card">
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.registerTitle') }}</h1>
-      <form autocomplete="off" @submit.prevent="onSubmit">
-        <tiny-form label-position="top">
-          <tiny-form-item :label="t('auth.username')">
+      <tiny-form label-position="top" autocomplete="off" @submit.prevent>
+        <tiny-form-item :label="t('auth.username')">
+          <tiny-input
+            v-model="form.username"
+            name="register-username"
+            autocomplete="username"
+            :placeholder="t('auth.usernamePlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.email')">
+          <tiny-input
+            v-model="form.email"
+            name="register-email"
+            type="email"
+            autocomplete="email"
+            :placeholder="t('auth.registerEmailPlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.code')">
+          <div class="code-row">
             <tiny-input
-              v-model="form.username"
-              name="register-username"
-              autocomplete="username"
-              :placeholder="t('auth.usernamePlaceholder')"
+              v-model="form.code"
+              name="register-otp"
+              autocomplete="one-time-code"
+              inputmode="numeric"
+              :placeholder="t('auth.codePlaceholder')"
             />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.email')">
-            <tiny-input
-              v-model="form.email"
-              name="register-email"
-              type="email"
-              autocomplete="email"
-              :placeholder="t('auth.registerEmailPlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.code')">
-            <div class="code-row">
-              <tiny-input
-                v-model="form.code"
-                name="register-otp"
-                autocomplete="one-time-code"
-                inputmode="numeric"
-                :placeholder="t('auth.codePlaceholder')"
-              />
-              <tiny-button :disabled="cooldown > 0 || sending" @click="onSendCode">
-                {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
-              </tiny-button>
-            </div>
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.password')">
-            <tiny-input
-              v-model="form.password"
-              type="password"
-              show-password
-              name="register-password"
-              autocomplete="new-password"
-              :placeholder="t('auth.passwordPlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.displayName')">
-            <tiny-input
-              v-model="form.display_name"
-              name="register-display-name"
-              autocomplete="nickname"
-              :placeholder="t('auth.displayNamePlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-button type="primary" native-type="submit" style="width:100%" :loading="loading">
-            {{ t('auth.register') }}
-          </tiny-button>
-        </tiny-form>
-      </form>
+            <tiny-button :disabled="cooldown > 0 || sending" :reset-time="0" @click="onSendCode">
+              {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
+            </tiny-button>
+          </div>
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.password')">
+          <tiny-input
+            v-model="form.password"
+            type="password"
+            show-password
+            name="register-password"
+            autocomplete="new-password"
+            :placeholder="t('auth.passwordPlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.displayName')">
+          <tiny-input
+            v-model="form.display_name"
+            name="register-display-name"
+            autocomplete="nickname"
+            :placeholder="t('auth.displayNamePlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-button type="primary" style="width:100%" :loading="loading" :reset-time="0" @click="onSubmit">
+          {{ t('auth.register') }}
+        </tiny-button>
+      </tiny-form>
       <p class="auth-link">
         <router-link :to="{ name: 'login' }">{{ t('auth.toLogin') }}</router-link>
       </p>
@@ -122,11 +120,16 @@ function startCooldown() {
 }
 
 async function onSendCode() {
-  if (!form.email) return
+  if (sending.value || cooldown.value > 0) return
+  const email = form.email.trim()
+  if (!email) {
+    error.value = t('auth.emailRequired')
+    return
+  }
   sending.value = true
   error.value = ''
   try {
-    await sendCodeApi({ email: form.email })
+    await sendCodeApi({ email })
     Modal.message({ message: t('auth.codeSent'), status: 'success' })
     startCooldown()
   } catch (e) {
@@ -137,10 +140,21 @@ async function onSendCode() {
 }
 
 async function onSubmit() {
+  if (loading.value) return
+  if (!form.username.trim() || !form.email.trim() || !form.code.trim() || !form.password) {
+    error.value = t('auth.registerRequired')
+    return
+  }
   loading.value = true
   error.value = ''
   try {
-    await userStore.register({ ...form })
+    await userStore.register({
+      ...form,
+      username: form.username.trim(),
+      email: form.email.trim(),
+      code: form.code.trim(),
+      display_name: form.display_name.trim(),
+    })
     localStorage.setItem('vibe_remember_account', '1')
     localStorage.setItem('vibe_last_account', form.username.trim())
     router.replace(resolveHomeRoute())

@@ -43,6 +43,8 @@ export default {
     registerEmailPlaceholder: '인증코드 및 비밀번호 찾기에 사용',
     displayNamePlaceholder: '사이트에 표시될 닉네임',
     emailRequired: '이메일을 입력하세요',
+    loginRequired: '계정과 비밀번호를 입력하세요',
+    registerRequired: '사용자명, 이메일, 인증코드, 비밀번호를 입력하세요',
     password: '비밀번호',
     newPassword: '새 비밀번호',
     confirmPassword: '새 비밀번호 확인',

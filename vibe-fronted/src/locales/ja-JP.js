@@ -43,6 +43,8 @@ export default {
     registerEmailPlaceholder: '認証コードとパスワード再設定に使用',
     displayNamePlaceholder: 'サイト上に表示されるニックネーム',
     emailRequired: 'メールを入力してください',
+    loginRequired: 'アカウントとパスワードを入力してください',
+    registerRequired: 'ユーザー名、メール、認証コード、パスワードを入力してください',
     password: 'パスワード',
     newPassword: '新しいパスワード',
     confirmPassword: '新しいパスワード（確認）',

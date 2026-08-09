@@ -9,38 +9,38 @@
     <div class="auth-card">
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.loginTitle') }}</h1>
-      <form autocomplete="on" @submit.prevent="onSubmit">
-        <tiny-form label-position="top">
-          <tiny-form-item :label="t('auth.account')">
-            <tiny-input
-              v-model="form.username"
-              name="username"
-              autocomplete="username"
-              :placeholder="t('auth.accountPlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.password')">
-            <tiny-input
-              v-model="form.password"
-              type="password"
-              show-password
-              name="password"
-              autocomplete="current-password"
-              :placeholder="t('auth.password')"
-            />
-          </tiny-form-item>
-          <div class="auth-extra">
-            <label class="remember-account">
-              <input v-model="rememberAccount" type="checkbox" />
-              <span>{{ t('auth.rememberAccount') }}</span>
-            </label>
-            <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
-          </div>
-          <tiny-button type="primary" native-type="submit" style="width:100%" :loading="loading">
-            {{ t('auth.login') }}
-          </tiny-button>
-        </tiny-form>
-      </form>
+      <tiny-form label-position="top" @submit.prevent>
+        <tiny-form-item :label="t('auth.account')">
+          <tiny-input
+            v-model="form.username"
+            name="username"
+            autocomplete="username"
+            :placeholder="t('auth.accountPlaceholder')"
+            @keyup.enter="onSubmit"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.password')">
+          <tiny-input
+            v-model="form.password"
+            type="password"
+            show-password
+            name="password"
+            autocomplete="current-password"
+            :placeholder="t('auth.password')"
+            @keyup.enter="onSubmit"
+          />
+        </tiny-form-item>
+        <div class="auth-extra">
+          <label class="remember-account">
+            <input v-model="rememberAccount" type="checkbox" />
+            <span>{{ t('auth.rememberAccount') }}</span>
+          </label>
+          <router-link :to="{ name: 'forgot-password' }">{{ t('auth.forgotPassword') }}</router-link>
+        </div>
+        <tiny-button type="primary" style="width:100%" :loading="loading" :reset-time="0" @click="onSubmit">
+          {{ t('auth.login') }}
+        </tiny-button>
+      </tiny-form>
       <p class="auth-link">
         <router-link :to="{ name: 'register' }">{{ t('auth.toRegister') }}</router-link>
       </p>
@@ -89,10 +89,15 @@ function onToggleTheme() {
 }
 
 async function onSubmit() {
+  if (loading.value) return
+  const account = form.username.trim()
+  if (!account || !form.password) {
+    error.value = t('auth.loginRequired')
+    return
+  }
   loading.value = true
   error.value = ''
   try {
-    const account = form.username.trim()
     await userStore.login(account, form.password)
     localStorage.setItem(REMEMBER_ACCOUNT_KEY, rememberAccount.value ? '1' : '0')
     if (rememberAccount.value) {

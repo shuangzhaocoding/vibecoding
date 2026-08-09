@@ -36,6 +36,8 @@ export default {
     email: '邮箱',
     emailPlaceholder: '注册时使用的邮箱',
     emailRequired: '请填写邮箱',
+    loginRequired: '请填写账号和密码',
+    registerRequired: '请填写用户名、邮箱、验证码和密码',
     password: '密码',
     passwordPlaceholder: '至少 6 位密码',
     newPassword: '新密码',

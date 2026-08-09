@@ -1,18 +1,25 @@
 <template>
   <div class="comment-node">
     <div class="comment-card">
-      <div class="comment-meta">
-        <span class="author">{{ comment.user?.display_name }}</span>
-        <span v-if="comment.reply_to" class="reply-to">
-          {{ t('project.replyTo') }} @{{ comment.reply_to.display_name }}
-        </span>
-        <span class="time">{{ formatTime(comment.created_at) }}</span>
-      </div>
-      <RichHtml class="comment-content" :html="comment.content" mode="simple" />
-      <div class="comment-actions">
-        <button type="button" class="reply-btn" @click="$emit('reply', comment)">
-          {{ t('project.reply') }}
-        </button>
+      <div class="comment-main">
+        <div class="comment-avatar" :style="avatarStyle" :title="comment.user?.display_name">
+          <span v-if="!comment.user?.avatar_url">{{ avatarLetter }}</span>
+        </div>
+        <div class="comment-body">
+          <div class="comment-meta">
+            <span class="author">{{ comment.user?.display_name }}</span>
+            <span v-if="comment.reply_to" class="reply-to">
+              {{ t('project.replyTo') }} @{{ comment.reply_to.display_name }}
+            </span>
+            <span class="time">{{ formatTime(comment.created_at) }}</span>
+          </div>
+          <RichHtml class="comment-content" :html="comment.content" mode="simple" />
+          <div class="comment-actions">
+            <button type="button" class="reply-btn" @click="$emit('reply', comment)">
+              {{ t('project.reply') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -76,6 +83,16 @@ defineEmits(['reply', 'cancel-reply', 'submit-reply', 'update:replyText'])
 const { t } = useI18n()
 const isReplying = computed(() => props.replyTargetId === props.comment.id)
 
+const avatarLetter = computed(() =>
+  (props.comment.user?.display_name || props.comment.user?.username || '?').slice(0, 1).toUpperCase(),
+)
+
+const avatarStyle = computed(() => {
+  const url = props.comment.user?.avatar_url
+  if (url) return { backgroundImage: `url(${url})` }
+  return {}
+})
+
 function formatTime(v) {
   if (!v) return ''
   return new Date(v).toLocaleString()
@@ -98,6 +115,33 @@ export default {
   border-radius: var(--radius-sm);
   background: var(--bg-muted);
   border: 1px solid var(--border);
+}
+
+.comment-main {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border);
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .comment-meta {
@@ -177,6 +221,12 @@ export default {
   .comment-children.nested {
     margin-left: 12px;
     padding-left: 8px;
+  }
+
+  .comment-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 }
 </style>

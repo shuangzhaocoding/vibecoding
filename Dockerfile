@@ -111,7 +111,7 @@ set -eu
 
 APP_HOST="${APP_HOST:-127.0.0.1}"
 APP_PORT="${APP_PORT:-8000}"
-APP_WORKERS="${APP_WORKERS:-4}"
+APP_WORKERS="${APP_WORKERS:-1}"
 
 echo "[entrypoint] start uvicorn ${APP_HOST}:${APP_PORT} workers=${APP_WORKERS}"
 cd /vibecoding

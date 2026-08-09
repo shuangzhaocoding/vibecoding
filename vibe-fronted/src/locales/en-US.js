@@ -36,6 +36,8 @@ export default {
     email: 'Email',
     emailPlaceholder: 'Email used at registration',
     emailRequired: 'Please enter your email',
+    loginRequired: 'Please enter account and password',
+    registerRequired: 'Please fill in username, email, code and password',
     password: 'Password',
     passwordPlaceholder: 'At least 6 characters',
     newPassword: 'New password',

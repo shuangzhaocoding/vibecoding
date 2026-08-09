@@ -10,56 +10,54 @@
       <div class="auth-brand">{{ t('app.title') }}</div>
       <h1>{{ t('auth.resetTitle') }}</h1>
       <p class="auth-desc">{{ t('auth.resetHint') }}</p>
-      <form autocomplete="off" @submit.prevent="onSubmit">
-        <tiny-form label-position="top">
-          <tiny-form-item :label="t('auth.email')">
+      <tiny-form label-position="top" autocomplete="off" @submit.prevent>
+        <tiny-form-item :label="t('auth.email')">
+          <tiny-input
+            v-model="form.email"
+            name="reset-email"
+            type="email"
+            autocomplete="email"
+            :placeholder="t('auth.emailPlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.code')">
+          <div class="code-row">
             <tiny-input
-              v-model="form.email"
-              name="reset-email"
-              type="email"
-              autocomplete="email"
-              :placeholder="t('auth.emailPlaceholder')"
+              v-model="form.code"
+              name="reset-otp"
+              autocomplete="one-time-code"
+              inputmode="numeric"
+              :placeholder="t('auth.codePlaceholder')"
             />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.code')">
-            <div class="code-row">
-              <tiny-input
-                v-model="form.code"
-                name="reset-otp"
-                autocomplete="one-time-code"
-                inputmode="numeric"
-                :placeholder="t('auth.codePlaceholder')"
-              />
-              <tiny-button :disabled="cooldown > 0 || sending" @click="onSendCode">
-                {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
-              </tiny-button>
-            </div>
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.newPassword')">
-            <tiny-input
-              v-model="form.new_password"
-              type="password"
-              show-password
-              name="reset-new-password"
-              autocomplete="new-password"
-              :placeholder="t('auth.newPasswordPlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-form-item :label="t('auth.confirmPassword')">
-            <tiny-input
-              v-model="form.confirm"
-              type="password"
-              show-password
-              name="reset-confirm-password"
-              autocomplete="new-password"
-              :placeholder="t('auth.confirmPasswordPlaceholder')"
-            />
-          </tiny-form-item>
-          <tiny-button type="primary" native-type="submit" style="width:100%" :loading="loading">
-            {{ t('auth.resetPassword') }}
-          </tiny-button>
-        </tiny-form>
-      </form>
+            <tiny-button :disabled="cooldown > 0 || sending" :reset-time="0" @click="onSendCode">
+              {{ cooldown > 0 ? `${cooldown}s` : t('auth.sendCode') }}
+            </tiny-button>
+          </div>
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.newPassword')">
+          <tiny-input
+            v-model="form.new_password"
+            type="password"
+            show-password
+            name="reset-new-password"
+            autocomplete="new-password"
+            :placeholder="t('auth.newPasswordPlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-form-item :label="t('auth.confirmPassword')">
+          <tiny-input
+            v-model="form.confirm"
+            type="password"
+            show-password
+            name="reset-confirm-password"
+            autocomplete="new-password"
+            :placeholder="t('auth.confirmPasswordPlaceholder')"
+          />
+        </tiny-form-item>
+        <tiny-button type="primary" style="width:100%" :loading="loading" :reset-time="0" @click="onSubmit">
+          {{ t('auth.resetPassword') }}
+        </tiny-button>
+      </tiny-form>
       <p class="auth-link">
         <router-link :to="{ name: 'login' }">{{ t('auth.toLogin') }}</router-link>
       </p>
@@ -113,6 +111,7 @@ function startCooldown() {
 }
 
 async function onSendCode() {
+  if (sending.value || cooldown.value > 0) return
   if (!form.email.trim()) {
     error.value = t('auth.emailRequired')
     return
@@ -131,6 +130,7 @@ async function onSendCode() {
 }
 
 async function onSubmit() {
+  if (loading.value) return
   if (!form.email.trim() || !form.code.trim() || !form.new_password) {
     error.value = t('auth.resetRequired')
     return
