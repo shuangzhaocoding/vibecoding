@@ -97,14 +97,32 @@ const avatarStyle = computed(() => {
   return {}
 })
 
+async function persistProfile(payload, { successMsg } = {}) {
+  const data = await userStore.updateProfile(payload)
+  form.display_name = data.display_name || form.display_name
+  form.avatar_url = data.avatar_url || ''
+  if (successMsg) {
+    Modal.message({ message: successMsg, status: 'success' })
+  }
+}
+
 async function onAvatarFile(e) {
   const file = e.target.files?.[0]
   if (!file) return
   uploading.value = true
   try {
     const res = await uploadAvatarApi(file)
-    form.avatar_url = res.data.url
-    Modal.message({ message: t('common.success'), status: 'success' })
+    const url = res.data?.url || ''
+    if (!url) throw new Error(t('profile.avatarUploadFailed'))
+    form.avatar_url = url
+    // 上传成功后立即写入数据库，无需再点「保存资料」
+    await persistProfile(
+      {
+        display_name: (form.display_name || userStore.user?.display_name || '').trim(),
+        avatar_url: url,
+      },
+      { successMsg: t('profile.avatarSaved') },
+    )
   } catch (err) {
     Modal.message({ message: err.message, status: 'error' })
   } finally {
@@ -113,8 +131,22 @@ async function onAvatarFile(e) {
   }
 }
 
-function clearAvatar() {
-  form.avatar_url = ''
+async function clearAvatar() {
+  uploading.value = true
+  try {
+    form.avatar_url = ''
+    await persistProfile(
+      {
+        display_name: (form.display_name || userStore.user?.display_name || '').trim(),
+        avatar_url: '',
+      },
+      { successMsg: t('common.success') },
+    )
+  } catch (err) {
+    Modal.message({ message: err.message, status: 'error' })
+  } finally {
+    uploading.value = false
+  }
 }
 
 async function saveProfile() {
@@ -125,13 +157,13 @@ async function saveProfile() {
   }
   savingProfile.value = true
   try {
-    await userStore.updateProfile({
-      display_name: name,
-      avatar_url: form.avatar_url || '',
-    })
-    form.display_name = userStore.user.display_name
-    form.avatar_url = userStore.user.avatar_url || ''
-    Modal.message({ message: t('common.success'), status: 'success' })
+    await persistProfile(
+      {
+        display_name: name,
+        avatar_url: form.avatar_url || '',
+      },
+      { successMsg: t('common.success') },
+    )
   } catch (err) {
     Modal.message({ message: err.message, status: 'error' })
   } finally {

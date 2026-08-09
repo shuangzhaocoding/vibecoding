@@ -49,6 +49,12 @@ async def _ensure_user_avatar_column() -> None:
     from tortoise import connections
 
     conn = connections.get("default")
+    rows = await conn.execute_query_dict(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar_url'"
+    )
+    if rows:
+        return
     try:
         await conn.execute_query(
             "ALTER TABLE `users` ADD COLUMN `avatar_url` VARCHAR(512) NOT NULL DEFAULT ''"
@@ -58,7 +64,7 @@ async def _ensure_user_avatar_column() -> None:
         msg = str(exc)
         if "1060" in msg or "Duplicate column" in msg:
             return
-        logger.debug(f"ensure avatar_url skipped: {exc}")
+        logger.warning(f"ensure avatar_url failed: {exc}")
 
 
 async def seed_data() -> None:
