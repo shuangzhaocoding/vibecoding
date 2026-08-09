@@ -32,27 +32,46 @@
         <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
           {{ theme === 'dark' ? '☀' : '☾' }}
         </button>
-        <template v-if="userStore.isLogin">
-          <router-link to="/center/profile" class="user-chip" :title="t('menu.profile')">
-            <span class="user-avatar" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
-            <span class="user-name">{{ userStore.user?.display_name }}</span>
-          </router-link>
-          <tiny-select
-            v-if="userStore.roles.length > 1"
-            class="action-select action-select-role"
-            :model-value="userStore.currentRole?.id"
-            :options="roleOptions"
-            @change="onRoleChange"
-          />
-        </template>
         <tiny-select
           class="action-select action-select-locale"
           :model-value="locale"
           :options="localeOptions"
           @change="onLocaleChange"
         />
+        <tiny-select
+          v-if="userStore.isLogin && userStore.roles.length > 1"
+          class="action-select action-select-role"
+          :model-value="userStore.currentRole?.id"
+          :options="roleOptions"
+          @change="onRoleChange"
+        />
         <template v-if="userStore.isLogin">
-          <tiny-button type="primary" plain @click="onLogout">{{ t('app.logout') }}</tiny-button>
+          <div ref="userMenuRef" class="user-menu">
+            <button
+              type="button"
+              class="user-chip"
+              :aria-expanded="userMenuOpen"
+              aria-haspopup="menu"
+              @click="userMenuOpen = !userMenuOpen"
+            >
+              <span class="user-avatar" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
+              <span class="user-name">{{ userStore.user?.display_name }}</span>
+              <span class="user-caret" :class="{ open: userMenuOpen }" />
+            </button>
+            <div v-show="userMenuOpen" class="user-menu-dropdown" role="menu">
+              <router-link
+                class="user-menu-item"
+                role="menuitem"
+                to="/center/profile"
+                @click="userMenuOpen = false"
+              >
+                {{ t('menu.profile') }}
+              </router-link>
+              <button type="button" class="user-menu-item danger" role="menuitem" @click="onLogout">
+                {{ t('app.logout') }}
+              </button>
+            </div>
+          </div>
         </template>
         <template v-else>
           <tiny-button type="primary" plain @click="router.push({ name: 'login' })">{{ t('app.login') }}</tiny-button>
@@ -63,6 +82,36 @@
         <button type="button" class="icon-btn" :title="t('app.theme')" @click="onToggleTheme">
           {{ theme === 'dark' ? '☀' : '☾' }}
         </button>
+        <div v-if="userStore.isLogin" ref="mobileUserMenuRef" class="user-menu">
+          <button
+            type="button"
+            class="user-chip user-chip-compact"
+            :aria-expanded="mobileUserMenuOpen"
+            aria-haspopup="menu"
+            @click="mobileUserMenuOpen = !mobileUserMenuOpen"
+          >
+            <span class="user-avatar" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
+            <span class="user-caret" :class="{ open: mobileUserMenuOpen }" />
+          </button>
+          <div v-show="mobileUserMenuOpen" class="user-menu-dropdown" role="menu">
+            <router-link
+              class="user-menu-item"
+              role="menuitem"
+              to="/center/profile"
+              @click="mobileUserMenuOpen = false"
+            >
+              {{ t('menu.profile') }}
+            </router-link>
+            <button type="button" class="user-menu-item danger" role="menuitem" @click="onLogout">
+              {{ t('app.logout') }}
+            </button>
+          </div>
+        </div>
+        <template v-else>
+          <tiny-button type="primary" plain size="mini" @click="router.push({ name: 'login' })">
+            {{ t('app.login') }}
+          </tiny-button>
+        </template>
       </div>
     </header>
 
@@ -98,18 +147,9 @@
           @change="onRoleChange"
         />
       </div>
-      <div class="mobile-drawer-actions">
-        <template v-if="userStore.isLogin">
-          <router-link to="/center/profile" class="mobile-user" @click="menuOpen = false">
-            <span class="user-avatar sm" :style="userAvatarStyle">{{ userAvatarLetter }}</span>
-            <span>{{ userStore.user?.display_name }}</span>
-          </router-link>
-          <tiny-button type="primary" plain style="width:100%" @click="onLogout">{{ t('app.logout') }}</tiny-button>
-        </template>
-        <template v-else>
-          <tiny-button type="primary" plain style="width:100%" @click="goAuth('login')">{{ t('app.login') }}</tiny-button>
-          <tiny-button type="primary" style="width:100%" @click="goAuth('register')">{{ t('app.register') }}</tiny-button>
-        </template>
+      <div v-if="!userStore.isLogin" class="mobile-drawer-actions">
+        <tiny-button type="primary" plain style="width:100%" @click="goAuth('login')">{{ t('app.login') }}</tiny-button>
+        <tiny-button type="primary" style="width:100%" @click="goAuth('register')">{{ t('app.register') }}</tiny-button>
       </div>
     </aside>
 
@@ -140,6 +180,10 @@ const router = useRouter()
 const userStore = useUserStore()
 const theme = ref(getStoredTheme())
 const menuOpen = ref(false)
+const userMenuOpen = ref(false)
+const mobileUserMenuOpen = ref(false)
+const userMenuRef = ref(null)
+const mobileUserMenuRef = ref(null)
 
 const roleOptions = computed(() =>
   userStore.roles.map((r) => ({ value: r.id, label: r.name })),
@@ -158,7 +202,6 @@ const userAvatarStyle = computed(() => {
 const topMenus = [
   { to: '/', name: 'plaza', label: 'menu.home' },
   { to: '/ranking', name: 'ranking', label: 'menu.ranking' },
-  { to: '/center', name: 'center', label: 'menu.center' },
 ]
 
 const isCenter = computed(() => route.path.startsWith('/center'))
@@ -166,7 +209,6 @@ const isCenter = computed(() => route.path.startsWith('/center'))
 function isTopActive(item) {
   if (item.name === 'plaza') return route.name === 'plaza'
   if (item.name === 'ranking') return route.name === 'ranking'
-  if (item.name === 'center') return isCenter.value
   return false
 }
 
@@ -176,6 +218,8 @@ function onToggleTheme() {
 
 async function onRoleChange(roleId) {
   menuOpen.value = false
+  userMenuOpen.value = false
+  mobileUserMenuOpen.value = false
   await userStore.switchRole(roleId)
   router.replace(resolveHomeRoute(userStore))
   window.location.reload()
@@ -187,6 +231,8 @@ function onLocaleChange(val) {
 
 async function onLogout() {
   menuOpen.value = false
+  userMenuOpen.value = false
+  mobileUserMenuOpen.value = false
   await userStore.logout()
   router.push({ name: 'plaza' })
 }
@@ -200,6 +246,23 @@ function onResize() {
   if (window.innerWidth > 768) menuOpen.value = false
 }
 
+function onDocClick(e) {
+  const target = e.target
+  if (userMenuRef.value && !userMenuRef.value.contains(target)) {
+    userMenuOpen.value = false
+  }
+  if (mobileUserMenuRef.value && !mobileUserMenuRef.value.contains(target)) {
+    mobileUserMenuOpen.value = false
+  }
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    userMenuOpen.value = false
+    mobileUserMenuOpen.value = false
+  }
+}
+
 watch(menuOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 })
@@ -208,31 +271,55 @@ watch(
   () => route.fullPath,
   () => {
     menuOpen.value = false
+    userMenuOpen.value = false
+    mobileUserMenuOpen.value = false
   },
 )
 
-onMounted(() => window.addEventListener('resize', onResize))
+onMounted(() => {
+  window.addEventListener('resize', onResize)
+  document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', onKeydown)
+})
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = ''
 })
 </script>
 
 <style scoped>
+.user-menu {
+  position: relative;
+  margin-left: 2px;
+}
+
 .user-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 160px;
-  padding: 4px 8px 4px 4px;
+  max-width: 180px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid transparent;
   border-radius: 999px;
   color: var(--text-secondary);
-  transition: background 0.15s ease, color 0.15s ease;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.user-chip:hover {
+.user-chip:hover,
+.user-chip[aria-expanded='true'] {
   background: var(--bg-muted);
   color: var(--text);
+  border-color: var(--border);
+}
+
+.user-chip-compact {
+  max-width: none;
+  padding: 3px 8px 3px 3px;
+  gap: 6px;
 }
 
 .user-avatar {
@@ -250,25 +337,63 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.user-avatar.sm {
-  width: 32px;
-  height: 32px;
-  font-size: 13px;
-}
-
 .user-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+  max-width: 110px;
 }
 
-.mobile-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  padding: 0 2px 4px;
+.user-caret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  opacity: 0.55;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.user-caret.open {
+  transform: rotate(180deg);
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 168px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+}
+
+.user-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.user-menu-item:hover {
+  background: var(--bg-muted);
+}
+
+.user-menu-item.danger {
+  color: var(--danger);
+  margin-top: 2px;
 }
 </style>
