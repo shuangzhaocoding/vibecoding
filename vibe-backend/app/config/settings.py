@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     # 用于 sitemap / 绝对链接（如 https://vibecoding.yugongcoding.com）
     public_base_url: str = "https://vibecoding.yugongcoding.com"
 
+    github_token: str = ""
+
     @property
     def db_url(self) -> str:
         password = quote_plus(self.db_password)

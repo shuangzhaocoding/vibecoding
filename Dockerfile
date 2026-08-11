@@ -29,14 +29,22 @@ RUN if [ -f /etc/apt/sources.list ]; then \
       sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list; \
     fi
 
-# 安装 nginx、时区
+# 安装 nginx、时区、cron（每天 02:00 抓取 GitHub 作品）
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends tzdata nginx \
+    && apt-get install -y --no-install-recommends tzdata nginx cron \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf || true \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone
+    && echo $TZ > /etc/timezone \
+    && touch /var/log/vibecoding-github-seed.log \
+    && printf '%s\n' \
+      'SHELL=/bin/sh' \
+      'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
+      'TZ=Asia/Shanghai' \
+      '0 2 * * * root /vibecoding/scripts/run_github_seed.sh' \
+      > /etc/cron.d/vibecoding-github-seed \
+    && chmod 0644 /etc/cron.d/vibecoding-github-seed
 
 # nginx 配置：静态目录 + /api 反代后端
 RUN cat > /etc/nginx/nginx.conf <<'EOF'
@@ -134,6 +142,20 @@ APP_HOST="${APP_HOST:-127.0.0.1}"
 APP_PORT="${APP_PORT:-8000}"
 APP_WORKERS="${APP_WORKERS:-1}"
 
+echo "[entrypoint] dump env for cron"
+python3 - <<'PY'
+import os, shlex
+skip = {"PWD", "OLDPWD", "SHLVL", "_", "LS_COLORS", "TERM"}
+with open("/etc/vibecoding.env", "w", encoding="utf-8") as f:
+    for k, v in sorted(os.environ.items()):
+        if k in skip or k.startswith("BASH_"):
+            continue
+        f.write(f"export {k}={shlex.quote(v)}\n")
+PY
+
+echo "[entrypoint] start cron (GitHub seed 02:00 Asia/Shanghai)"
+cron
+
 echo "[entrypoint] start uvicorn ${APP_HOST}:${APP_PORT} workers=${APP_WORKERS}"
 cd /vibecoding
 uvicorn app.main:app --host "${APP_HOST}" --port "${APP_PORT}" --workers "${APP_WORKERS}" &
@@ -169,6 +191,8 @@ RUN pip3 install -r /tmp/requirements.txt --trusted-host repo.huaweicloud.com \
     && rm -f /tmp/requirements.txt
 
 COPY vibe-backend/app ./app
+COPY vibe-backend/scripts ./scripts
+RUN chmod +x /vibecoding/scripts/run_github_seed.sh
 
 # 使用本地预构建的前端产物
 COPY vibe-fronted/dist /usr/share/nginx/html

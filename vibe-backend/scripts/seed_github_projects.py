@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""从 GitHub 搜索 Vibe Coding 作品并写入 projects 表。
+"""从 GitHub 搜索 Vibe Coding 作品并写入 / 更新 projects 表。
 
 用法（在 vibe-backend 目录下）:
   ../../venv/bin/python scripts/seed_github_projects.py --dry-run
   ../../venv/bin/python scripts/seed_github_projects.py --limit 12
   GITHUB_TOKEN=xxx ../../venv/bin/python scripts/seed_github_projects.py --min-stars 50
+
+容器内由 cron 每天 02:00（Asia/Shanghai）调用 scripts/run_github_seed.sh。
 
 可选环境变量:
   GITHUB_TOKEN  提高 API 限额（未登录约 10 次/分钟，有 token 约 30 次/分钟）
@@ -31,7 +33,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from app.config.settings import TORTOISE_ORM  # noqa: E402
+from app.config.settings import TORTOISE_ORM, settings  # noqa: E402
 from app.models import Project, User  # noqa: E402
 
 # GitHub 搜索查询（按星数排序后合并去重）
@@ -316,44 +318,82 @@ def collect_candidates(
     return accepted
 
 
+async def find_existing(repo: Dict[str, Any], site_url: str) -> Optional[Project]:
+    """按站点 URL 或仓库地址匹配已有作品（避免同名仓库误伤）。"""
+    full_name = repo["full_name"]
+    github_url = f"https://github.com/{full_name}"
+    found = await Project.filter(Q(site_url=site_url) | Q(site_url=site_url + "/")).first()
+    if found:
+        return found
+    return await Project.filter(description__contains=github_url).first()
+
+
+def build_sync_fields(repo: Dict[str, Any], site_url: str) -> Dict[str, Any]:
+    title = (repo.get("name") or repo["full_name"]).strip()[:200]
+    return {
+        "title": title,
+        "cover_url": OG_COVER.format(full_name=repo["full_name"]),
+        "summary": build_summary(repo),
+        "description": build_description(repo),
+        "site_url": site_url,
+        "tags": pick_tags(repo),
+        "status": "published",
+    }
+
+
 async def upsert_projects(
     repos: List[Dict[str, Any]],
     *,
     author: User,
     limit: int,
     dry_run: bool,
+    do_update: bool,
 ) -> Dict[str, int]:
-    stats = {"inserted": 0, "skipped": 0, "considered": 0}
+    stats = {"inserted": 0, "updated": 0, "skipped": 0, "considered": 0}
+    insert_cap = None if limit <= 0 else limit
     for repo in repos:
-        if stats["inserted"] >= limit:
-            break
         stats["considered"] += 1
-        title = (repo.get("name") or repo["full_name"]).strip()[:200]
-        # 更友好的展示名：owner/name 里取 name，保留原 description 在 summary
-        display_title = title
         site_url = effective_homepage(repo)
         assert site_url  # should_skip 已保证
+        display_title = (repo.get("name") or repo["full_name"]).strip()[:200]
+        existing = await find_existing(repo, site_url)
+        fields = build_sync_fields(repo, site_url)
 
-        exists = await Project.filter(
-            Q(title=display_title) | Q(site_url=site_url) | Q(site_url=site_url + "/")
-        ).exists()
-        if exists:
-            logger.info(f"exists, skip: {display_title} ({site_url})")
+        if existing:
+            if existing.author_id != author.id:
+                logger.info(
+                    f"exists other author, skip: {display_title} #{existing.id} ({site_url})"
+                )
+                stats["skipped"] += 1
+                continue
+            if not do_update:
+                logger.info(f"exists, skip update: {display_title} ({site_url})")
+                stats["skipped"] += 1
+                continue
+            if dry_run:
+                logger.info(
+                    f"[dry-run] would update #{existing.id}: {display_title} | {site_url} | "
+                    f"★{repo.get('stargazers_count')}"
+                )
+                stats["updated"] += 1
+                continue
+            for key, value in fields.items():
+                setattr(existing, key, value)
+            await existing.save()
+            logger.info(f"updated #{existing.id}: {display_title} -> {site_url}")
+            stats["updated"] += 1
+            continue
+
+        if insert_cap is not None and stats["inserted"] >= insert_cap:
+            logger.debug(f"insert limit reached, skip new: {display_title}")
             stats["skipped"] += 1
             continue
 
         payload = {
-            "title": display_title,
-            "cover_url": OG_COVER.format(full_name=repo["full_name"]),
-            "summary": build_summary(repo),
-            "description": build_description(repo),
-            "site_url": site_url,
-            "tags": pick_tags(repo),
-            "status": "published",
+            **fields,
             "author": author,
             **popularity_seed(int(repo.get("stargazers_count") or 0)),
         }
-
         if dry_run:
             logger.info(
                 f"[dry-run] would insert: {display_title} | {site_url} | "
@@ -369,7 +409,7 @@ async def upsert_projects(
 
 
 async def amain(args: argparse.Namespace) -> int:
-    token = args.token or os.environ.get("GITHUB_TOKEN") or None
+    token = args.token or os.environ.get("GITHUB_TOKEN") or (settings.github_token or None) or None
     queries = args.query or DEFAULT_QUERIES
     curated = [] if args.no_curated else CURATED_REPOS
 
@@ -397,10 +437,12 @@ async def amain(args: argparse.Namespace) -> int:
             author=author,
             limit=args.limit,
             dry_run=args.dry_run,
+            do_update=not args.no_update,
         )
         logger.info(
-            f"done: inserted={stats['inserted']} skipped={stats['skipped']} "
-            f"considered={stats['considered']} dry_run={args.dry_run}"
+            f"done: inserted={stats['inserted']} updated={stats['updated']} "
+            f"skipped={stats['skipped']} considered={stats['considered']} "
+            f"dry_run={args.dry_run}"
         )
     finally:
         await Tortoise.close_connections()
@@ -409,7 +451,12 @@ async def amain(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="从 GitHub 抓取 Vibe Coding 作品写入数据库")
-    p.add_argument("--limit", type=int, default=12, help="最多新写入条数（默认 12）")
+    p.add_argument(
+        "--limit",
+        type=int,
+        default=12,
+        help="最多新写入条数（默认 12；0 表示不限制；已存在记录仍会更新）",
+    )
     p.add_argument("--min-stars", type=int, default=100, help="最低 star 数（默认 100）")
     p.add_argument("--per-query", type=int, default=20, help="每个搜索查询取前 N 条")
     p.add_argument("--author", default="admin", help="作品作者用户名（默认 admin）")
@@ -417,7 +464,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--query", action="append", help="自定义搜索 query，可重复；默认用内置查询")
     p.add_argument("--no-curated", action="store_true", help="不强制拉取 CURATED_REPOS")
     p.add_argument("--sleep", type=float, default=1.2, help="请求间隔秒数，避免限流")
-    p.add_argument("--dry-run", action="store_true", help="只打印将写入的条目，不落库")
+    p.add_argument("--dry-run", action="store_true", help="只打印将写入/更新的条目，不落库")
+    p.add_argument("--no-update", action="store_true", help="已存在则跳过，不更新简介/标签等")
     return p
 
 
