@@ -1,0 +1,27 @@
+---
+description: "{{PROJECT_NAME}} 项目总览与协作约定（始终生效）"
+alwaysApply: true
+---
+
+# {{PROJECT_NAME}} 总览
+
+## 目录
+
+- `{{BACKEND_DIR}}/`：Python 3.11 + FastAPI + Tortoise + Pydantic + MySQL + JWT
+- `{{FRONTEND_DIR}}/`：Vue3 + Vite + @opentiny/vue@3 + Axios + vue-i18n（zh/en/ja/ko）
+- 虚拟环境：仓库根 `venv/`（Python 3.11）
+- 密钥只放 `{{BACKEND_DIR}}/.env`（gitignore），禁止写入代码或 rules
+
+## 原则
+
+- API 走 REST；统一响应 `code` **1200 成功 / 1100 失败**（HTTP 仍 200）
+- 开发跨域：Vite proxy `/api` → `127.0.0.1:{{API_PORT}}`（勿依赖后端 CORS）
+- JWT Bearer；权限点 + `data_scope` **后端强制校验**；前端只控菜单/按钮
+- 文案全部 i18n；错误用稳定 `error_code`，前端 `error.CODE` 翻译
+- 优先 OpenTiny；逻辑复用 ≥2 次再抽取；不无关重构、不擅自升级依赖
+
+## 导航骨架
+
+- 顶栏：公开页（如首页 / 排行）+ 个人中心入口
+- 侧栏：仅 `/center/*` 显示，按权限 code 动态拼菜单
+- 公开页 `meta.public`；登录页 `meta.auth`；管理页再加 `meta.perm`

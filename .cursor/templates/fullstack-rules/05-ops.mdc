@@ -1,0 +1,28 @@
+---
+description: 开发与部署约定（env、proxy、Docker）
+alwaysApply: false
+---
+
+# 开发与部署
+
+## 本地
+
+- 后端：仓库根 `venv/`，`{{BACKEND_DIR}}/run.py` → `0.0.0.0:{{API_PORT}}` reload
+- 前端：`{{FRONTEND_DIR}}` Vite `{{VITE_PORT}}`，`server.proxy['/api']` → `http://127.0.0.1:{{API_PORT}}`
+- `.env` 从 `.env.example` 复制；含 DB / JWT `SECRET_KEY` / SMTP / OBS；禁止提交密钥
+
+## 统一健康检查
+
+- `GET /api/health` → `{ code: 1200, message: "ok", data: true }`
+
+## 生产（本仓库模式）
+
+- 前端 `npm run build` 出静态资源
+- 容器内 nginx 托管静态目录，`/api` 反代本机 uvicorn（如 8000）
+- `client_max_body_size` 需覆盖上传上限（封面 5MB / 头像 2MB）
+- 启动读 `--env-file {{BACKEND_DIR}}/.env`；Tortoise `generate_schemas` + `seed_data` 在 lifespan
+
+## 不要做
+
+- 开发环境不要靠后端 CORS 解决跨域
+- 不要把密钥写进 Dockerfile、rules、前端代码

@@ -1,0 +1,32 @@
+---
+description: RBAC 与认证约定
+globs: "{{BACKEND_DIR}}/**,{{FRONTEND_DIR}}/**"
+alwaysApply: false
+---
+
+# 认证与 RBAC
+
+## 认证流
+
+- 注册：邮箱验证码 → 建用户 → 赋 `{{DEFAULT_ROLE}}` → 签发 JWT
+- 登录签发；退出只清本地 `{{AUTH_STORAGE}}`（可调后端 `/auth/logout`）
+- 多角色；`POST /api/auth/switch-role` 重签 JWT，菜单/按钮/数据范围刷新
+- 生效权限 = **当前角色权限 ∪ 用户附加权限**
+- 数据范围取当前角色 `data_scope`：`all` | `assigned` | `reported`
+
+## 权限点
+
+- code 英文、冒号分层：`{domain}:{action}`，如 `system:user:view`、`item:manage`
+- 预置在 `seed.py`，也可在权限管理页增删（需 `system:perm:manage`）
+- 后端路由用 `PermissionChecking("code")`；`require_all=False` 表示任一即可
+- `is_system` 角色不可删；`{{ADMIN_ROLE}}` 种子用户密码来自 `.env` 的 `DEFAULT_PASSWORD`
+
+## 前端
+
+- store 存 `token / user / roles / currentRole / permissions`，`hasPerm(code)`
+- 侧栏按 `hasPerm` 拼菜单；路由 `meta.perm` 无权限 → `/403`
+- 前端隐藏不能替代后端校验
+
+## 必须落地的 auth API
+
+`/api/auth/send-code`、`/register`、`/login`、`/logout`、`/switch-role`、`/me`、`/profile`

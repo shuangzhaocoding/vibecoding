@@ -1,0 +1,45 @@
+---
+description: 新增业务域脚手架（复制此流程实现一个资源）
+alwaysApply: false
+---
+
+# 新增业务域（以 `item` 为例，替换资源名）
+
+一次加齐后端模块、权限种子、前端 API/页面/i18n，禁止只做一半。
+
+## 1. 模型 `app/models/item.py`
+
+- 业务字段 + `created_at` / `updated_at`
+- 若有作者：`author = FK User`；状态用明确枚举字符串
+- 互动表用 `unique_together = (user, item)`；计数字段与写操作同事务增减
+- 在 `models/__init__.py` 导出
+
+## 2. 模块 `app/item_module/`
+
+- `schema.py`：Create / Update Body（Pydantic Field 限制长度）
+- `router.py`：`APIRouter(prefix="/items")`
+  - 公开读：`get_optional_user`（登录则多返回 liked 等）
+  - 写：`PermissionChecking("item:create")` 等
+  - 删改：作者本人 **或** `item:manage`
+- `main.py`：`include_router(item_router, prefix="/api")`
+
+## 3. 权限种子
+
+```
+item:view / item:create / item:update / item:delete / item:manage
+```
+
+写入 `PERMISSIONS`，并赋给 `{{ADMIN_ROLE}}`；默认角色按产品需要勾选。错误码：`ITEM_NOT_FOUND`（前端 `error.ITEM_NOT_FOUND` 四语同步）。
+
+## 4. 前端
+
+- `src/api/item.js`：函数名与 REST 一一对应
+- 公开列表/详情：`meta.public`；我的/编辑：`/center/*` + `meta.auth` + `meta.perm`
+- `CenterLayout` 菜单：`hasPerm('item:create')` 才显示入口
+- locales 四份同步：`menu.*`、页面文案、`error.*`
+
+## 5. 自检
+
+- 未登录可读公开接口；无 token 写接口返回 `AUTH_MISSING_TOKEN`
+- 无权限写返回 `PERMISSION_DENIED`，前端 GET 进 403
+- 资源不存在返回 `ITEM_NOT_FOUND`，前端 GET 进 404

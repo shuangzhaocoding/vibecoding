@@ -1,0 +1,45 @@
+---
+description: 后端约定（FastAPI + Tortoise + REST）
+globs: "{{BACKEND_DIR}}/**"
+alwaysApply: false
+---
+
+# 后端约定
+
+## 结构
+
+```
+{{BACKEND_DIR}}/app/
+  main.py              # lifespan：Tortoise.init → generate_schemas → seed
+  schema.py            # ResponseSuccess/Failed、BaseAppException
+  common/auth.py       # get_current_user / get_optional_user / PermissionChecking
+  config/settings.py   # pydantic-settings 读 .env
+  models/              # Tortoise 模型，在 models/__init__.py 导出
+  utils/               # jwt、邮件、对象存储、限流
+  seed.py
+  <name>_module/       # router.py + schema.py（prefix 全局唯一）
+```
+
+现成模块：`auth_module`、`system_module`、`file_module`，业务再加 `<resource>_module`。
+
+## REST 与响应
+
+- 资源名词复数：`/api/users`、`/api/<resources>`
+- `GET/POST/PATCH/DELETE`；子资源 `/<resources>/{id}/<action>`
+- 列表用 Query 分页：`page` / `page_size`，返回 `{items, total, page, page_size}`
+- 业务失败：`raise BaseAppException(error_code="X")`，handler 转 `ResponseFailed`
+
+```python
+router = APIRouter(prefix="/items", tags=["items"])
+
+@router.get("")
+async def list_items(...):
+    return ResponseSuccess(data={"items": ..., "total": ..., "page": page, "page_size": page_size})
+```
+
+## 鉴权与数据
+
+- 写操作：`Depends(PermissionChecking("item:create"))`
+- 公开读且可选登录态：`Depends(get_optional_user)`
+- JWT payload：`sub`（user id）+ `current_role_id`
+- 开发入口 `run.py`，端口 `{{API_PORT}}`；日志 loguru；文件头中文注释

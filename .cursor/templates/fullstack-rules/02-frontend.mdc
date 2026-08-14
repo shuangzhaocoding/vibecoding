@@ -1,0 +1,30 @@
+---
+description: 前端约定（Vue3 + OpenTiny + i18n）
+globs: "{{FRONTEND_DIR}}/**"
+alwaysApply: false
+---
+
+# 前端约定
+
+Node 22 + Vue3 + Vite + Pinia + `@opentiny/vue@3` + Axios + vue-i18n。
+
+## 目录
+
+- `src/api/`：与后端路径对齐，只包 Axios
+- `src/views/`、`src/components/`、`src/layout/`、`src/router/`、`src/stores/`
+- `src/locales/`：`zh-CN` / `en-US` / `ja-JP` / `ko-KR` 结构必须一致
+- 主题：`data-theme` + `src/utils/theme.js`，持久化 `{{THEME_STORAGE}}`
+
+## 接口
+
+- `baseURL: '/api'`；带 token 则 `Authorization: Bearer`
+- 解析 `{ code, message, data }`；`code !== 1200` 用 `detail.error_code` 做 i18n
+- GET 遇 `PERMISSION_DENIED` → 路由 `forbidden`（`/403`）；`NOT_FOUND` / `*_NOT_FOUND` → `not-found`（`/404`）
+- 鉴权失效码走 `forceLogin`，清 `{{AUTH_STORAGE}}`
+
+## 路由与 UI
+
+- `meta.public` 可匿名；`meta.auth` 需登录；`meta.perm` 需权限 code
+- 已登录访问 login/register → 回公开首页，勿无条件进 dashboard
+- DialogBox 用 `v-model:visible`；文案禁止硬编码，用 `t('key')`
+- OpenTiny 不足再自研；与邻近代码风格一致
