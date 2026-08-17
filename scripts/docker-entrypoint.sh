@@ -3,7 +3,7 @@ set -eu
 
 APP_HOST="${APP_HOST:-127.0.0.1}"
 APP_PORT="${APP_PORT:-8000}"
-APP_WORKERS="${APP_WORKERS:-1}"
+APP_WORKERS="${APP_WORKERS:-4}"
 
 echo "[entrypoint] dump env for cron"
 python3 - <<'PY'
@@ -40,4 +40,4 @@ while [ "$i" -lt 60 ]; do
 done
 
 echo "[entrypoint] start nginx :80"
-exec nginx -g 'daemon off;'
+exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
