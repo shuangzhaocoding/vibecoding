@@ -17,7 +17,7 @@ alwaysApply: false
 
 ## 生产（本仓库模式）
 
-- 前端 `npm run build` 出静态资源
+- Docker 构建阶段在镜像内 `npm ci` + `npm run build`，产物落到 nginx html（无需提交 dist）
 - 容器内 nginx 托管静态目录，`/api` 反代本机 uvicorn（如 8000）
 - `client_max_body_size` 需覆盖上传上限（封面 5MB / 头像 2MB）
 - 启动读 `--env-file {{BACKEND_DIR}}/.env`；Tortoise `generate_schemas` + `seed_data` 在 lifespan

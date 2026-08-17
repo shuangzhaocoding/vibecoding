@@ -1,5 +1,5 @@
 # VibeCoding
-# 1) 复制本地已构建的前端 dist（需先在 vibe-fronted 执行 npm run build）
+# 1) 镜像内 npm install + npm run build 前端，产物落到 nginx html
 # 2) 安装 nginx，托管静态目录并反代 /api
 # 3) 启动后端 uvicorn
 #
@@ -194,8 +194,18 @@ COPY vibe-backend/app ./app
 COPY vibe-backend/scripts ./scripts
 RUN chmod +x /vibecoding/scripts/run_github_seed.sh
 
-# 使用本地预构建的前端产物
-COPY vibe-fronted/dist /usr/share/nginx/html
+# 镜像内构建前端，产物拷到 nginx 目录后清理源码与依赖
+COPY vibe-fronted/package.json vibe-fronted/package-lock.json /tmp/vibe-fronted/
+WORKDIR /tmp/vibe-fronted
+RUN npm config set registry https://repo.huaweicloud.com/repository/npm/ \
+    && npm ci
+COPY vibe-fronted/ /tmp/vibe-fronted/
+RUN npm run build \
+    && rm -rf /usr/share/nginx/html/* \
+    && cp -a dist/. /usr/share/nginx/html/ \
+    && rm -rf /tmp/vibe-fronted
+
+WORKDIR /vibecoding
 
 EXPOSE 80
 

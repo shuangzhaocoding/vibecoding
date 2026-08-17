@@ -8,10 +8,7 @@
 venv/
 **/venv/
 **/node_modules/
-# 允许复制预构建前端；其它目录的 dist 仍忽略
 **/dist/
-!vibe-fronted/dist/
-!vibe-fronted/dist/**
 **/.env
 **/.env.*
 !**/.env.example
